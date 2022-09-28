@@ -1,0 +1,27 @@
+# exclude everything
+.idea/*
+userfiles/*
+vendor/*
+public/node_modules/*
+public/npm
+public/npm.cmd
+public/npx
+public/npx.cmd
+public/css/.sass-cache/*
+temp/cache/**
+temp/log/**
+config/general.local.neon
+config/general.production.neon
+public/admin/css/.sass-cache/*
+*.min.js
+*.map
+tests/acceptance.suite.yml
+
+# except
+!userfiles/.gitkeep
+!temp/.gitkeep
+!temp/log
+!temp/log/.gitkeep
+!temp/sessions
+!temp/sessions/.gitkeep
+!public/css/front.css

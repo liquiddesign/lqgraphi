@@ -1,0 +1,12 @@
+includes:
+    - vendor/phpstan/phpstan-nette/extension.neon
+    - vendor/liquiddesign/storm/phpstan-extension.neon
+
+parameters:
+	level: 8
+	paths:
+		- src
+	excludePaths:
+		- config/*
+		- templates/*
+		- tests/*

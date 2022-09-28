@@ -1,0 +1,45 @@
+{
+    "name": "liquiddesign/lqgraphi",
+    "type": "library",
+    "description": "GraphQL API library for Liquid Design ecosystem",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {"LqGrAphi\\": "src"},
+        "classmap": []
+    },
+    "prefer-stable": true,
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=8.1",
+        "liquiddesign/storm": "^1.0.55",
+        "liquiddesign/base": "^1.0",
+        "liquiddesign/common": "^0.1",
+        "ext-intl": "*",
+        "ext-pdo": "*",
+        "ext-json": "*",
+        "webonyx/graphql-php": "^14.0",
+        "mll-lab/graphql-php-scalars": "^5.4",
+        "contributte/psr7-http-message": "^0.8.0",
+        "simpod/graphql-utils": "^0.5.4",
+        "haydenpierce/class-finder": "^0.4.3"
+    },
+    "require-dev": {
+        "nette/tester": "^2.4",
+        "phpstan/phpstan-nette": "^1.0",
+        "squizlabs/php_codesniffer": "~3.7",
+        "slevomat/coding-standard": "~8.2"
+    },
+    "scripts": {
+        "fix-code": ["@phpcsfix"],
+        "check-code": ["@phpcs", "@phpstan"],
+        "phpstan": "phpstan analyse --memory-limit 4G -c phpstan.neon",
+        "phpcs": "phpcs --standard=ruleset.xml --ignore=*/tests/* --cache ./src",
+        "phpcsfix": "phpcbf --standard=ruleset.xml --cache ./src"
+    },
+    "config": {
+        "allow-plugins": {
+            "symfony/thanks": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}
