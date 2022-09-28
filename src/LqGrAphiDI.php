@@ -2,13 +2,14 @@
 
 declare(strict_types=1);
 
-namespace LqGrAphi\Schema;
+namespace LqGrAphi;
 
+use LqGrAphi\Schema\TypeRegister;
 use Nette\DI\CompilerExtension;
 use Nette\Schema\Expect;
 use Nette\Schema\Schema;
 
-class TypeRegisterDI extends CompilerExtension
+class LqGrAphiDI extends CompilerExtension
 {
 	public function getConfigSchema(): Schema
 	{
@@ -29,6 +30,7 @@ class TypeRegisterDI extends CompilerExtension
 
 		$builder = $this->getContainerBuilder();
 
+		$builder->addDefinition($this->prefix('graphqlHandler'))->setType(GraphQLHandler::class);
 		$typeRegister = $builder->addDefinition($this->prefix('typeRegister'))->setType(TypeRegister::class);
 
 		if (isset($config['types']->output)) {
