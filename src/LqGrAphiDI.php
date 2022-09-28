@@ -14,6 +14,8 @@ class LqGrAphiDI extends CompilerExtension
 	public function getConfigSchema(): Schema
 	{
 		return Expect::structure([
+			'resolversNamespace' => Expect::string()->required(),
+			'queryAndMutationsNamespace' => Expect::string()->required(),
 			'types' => Expect::structure([
 				'output' => Expect::arrayOf(Expect::string()),
 				'input' => Expect::arrayOf(Expect::string()),
@@ -30,8 +32,11 @@ class LqGrAphiDI extends CompilerExtension
 
 		$builder = $this->getContainerBuilder();
 
-		$builder->addDefinition($this->prefix('graphqlHandler'))->setType(GraphQLHandler::class);
+		$graphQLHandler = $builder->addDefinition($this->prefix('graphQLHandler'))->setType(GraphQLHandler::class);
 		$typeRegister = $builder->addDefinition($this->prefix('typeRegister'))->setType(TypeRegister::class);
+
+		$graphQLHandler->addSetup('setResolversNamespace', [$config['resolversNamespace']]);
+		$graphQLHandler->addSetup('setQueryAndMutationsNamespace', [$config['queryAndMutationsNamespace']]);
 
 		if (isset($config['types']->output)) {
 			foreach ($config['types']->output as $name => $type) {

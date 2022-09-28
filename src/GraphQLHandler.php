@@ -29,6 +29,16 @@ use Tracy\ILogger;
 
 class GraphQLHandler
 {
+	/**
+	 * @var class-string
+	 */
+	private string $queryAndMutationsNamespace;
+
+	/**
+	 * @var class-string
+	 */
+	private string $resolversNamespace;
+
 	public function __construct(private readonly Container $container)
 	{
 	}
@@ -64,8 +74,14 @@ class GraphQLHandler
 						throw new BadRequestException("Query '$fieldName' not matched!");
 					}
 
+					$resolversNamespace = $this->getResolversNamespace();
+
+					if (!Strings::endsWith($resolversNamespace, '\\')) {
+						$resolversNamespace .= '\\';
+					}
+
 					/** @var class-string $resolverName */
-					$resolverName = 'App\\Resolvers\\' . Strings::firstUpper(Strings::lower($matchedFieldName[0])) . 'Resolver';
+					$resolverName = $resolversNamespace . Strings::firstUpper(Strings::lower($matchedFieldName[0])) . 'Resolver';
 
 					/** @var \LqGrAphi\Resolvers\BaseResolver|null $resolver */
 					$resolver = $this->container->getByType($resolverName, false);
@@ -160,7 +176,7 @@ class GraphQLHandler
 
 	public function getSchema(): Schema
 	{
-		$classes = ClassFinder::getClassesInNamespace('App\Schema\Types', ClassFinder::RECURSIVE_MODE);
+		$classes = ClassFinder::getClassesInNamespace($this->getQueryAndMutationsNamespace(), ClassFinder::RECURSIVE_MODE);
 
 		if (!$classes) {
 			throw new \Exception('You need to specify at least one query or mutation!');
@@ -232,6 +248,38 @@ class GraphQLHandler
 		}
 
 		return $debug;
+	}
+
+	/**
+	 * @return class-string
+	 */
+	public function getQueryAndMutationsNamespace(): string
+	{
+		return $this->queryAndMutationsNamespace;
+	}
+
+	/**
+	 * @param class-string $queryAndMutationsNamespace
+	 */
+	public function setQueryAndMutationsNamespace(string $queryAndMutationsNamespace): void
+	{
+		$this->queryAndMutationsNamespace = $queryAndMutationsNamespace;
+	}
+
+	/**
+	 * @return class-string
+	 */
+	public function getResolversNamespace(): string
+	{
+		return $this->resolversNamespace;
+	}
+
+	/**
+	 * @param class-string $resolversNamespace
+	 */
+	public function setResolversNamespace(string $resolversNamespace): void
+	{
+		$this->resolversNamespace = $resolversNamespace;
 	}
 
 	private function getContext(): GraphQLContext
