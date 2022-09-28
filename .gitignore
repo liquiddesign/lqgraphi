@@ -16,6 +16,7 @@ public/admin/css/.sass-cache/*
 *.min.js
 *.map
 tests/acceptance.suite.yml
+composer.lock
 
 # except
 !userfiles/.gitkeep
