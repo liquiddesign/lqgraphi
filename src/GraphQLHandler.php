@@ -21,9 +21,11 @@ use LqGrAphi\Resolvers\Exceptions\BadRequestException;
 use LqGrAphi\Schema\BaseMutation;
 use LqGrAphi\Schema\BaseQuery;
 use Nette\DI\Container;
+use Nette\Http\Request;
 use Nette\Utils\FileSystem;
 use Nette\Utils\Strings;
 use StORM\Connection;
+use StORM\DIConnection;
 use Tracy\Debugger;
 use Tracy\ILogger;
 
@@ -39,8 +41,11 @@ class GraphQLHandler
 	 */
 	private string $resolversNamespace;
 
-	public function __construct(private readonly Container $container)
-	{
+	public function __construct(
+		private readonly Container $container,
+		private readonly Request $httpRequest,
+		private readonly DIConnection $connection,
+	) {
 	}
 
 	/**
@@ -50,10 +55,7 @@ class GraphQLHandler
 	public function handle(): array
 	{
 		try {
-			/** @var \Nette\Http\Request $httpRequest */
-			$httpRequest = $this->container->getByType(\Nette\Http\Request::class);
-
-			$psrRequest = Psr7RequestFactory::fromNette($httpRequest);
+			$psrRequest = Psr7RequestFactory::fromNette($this->httpRequest);
 
 			$schema = $this->getCachedSchema();
 
@@ -284,8 +286,17 @@ class GraphQLHandler
 
 	private function getContext(): GraphQLContext
 	{
+		$languages = $this->connection->getAvailableMutations();
+
+		$detectedLanguage = $this->httpRequest->detectLanguage(\array_keys($languages));
+
+		if ($detectedLanguage) {
+			$this->connection->setMutation($detectedLanguage);
+		}
+
 		return new GraphQLContext(
 			$this->getDebugFlag(),
+			$detectedLanguage,
 		);
 	}
 }
