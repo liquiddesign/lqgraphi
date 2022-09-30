@@ -130,6 +130,17 @@ public function getMany(array $rootValue, array $args, GraphQLContext $context, 
 }
 ```
 
+Recommended way of configuration
+
+```neon
+services:
+	graphql_resolvers:
+		in: %appDir%
+		files: [Resolvers/*Resolver.php, Resolvers/*/*Resolver.php]
+		implements:
+		    - LqGrAphi\Resolvers\BaseResolver
+```
+
 ### CRUD
 
 You can write your types and queries by yourself, but most of the time you just want to take existing entity and make crud operations for it.
