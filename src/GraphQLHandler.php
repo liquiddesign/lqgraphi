@@ -292,6 +292,8 @@ class GraphQLHandler
 
 		if ($detectedLanguage) {
 			$this->connection->setMutation($detectedLanguage);
+		} else {
+			$detectedLanguage = $this->connection->getMutation();
 		}
 
 		return new GraphQLContext(

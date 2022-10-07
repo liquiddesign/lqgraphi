@@ -121,6 +121,7 @@ abstract class CrudResolver extends BaseResolver
 		$repository = $this->getRepository();
 
 		[$input, $addRelations] = $this->extractRelationsFromInput($args['input']);
+		$input = $this->processMutationsFromInput($input, $context, $repository);
 
 		try {
 			$object = $repository->syncOne($input);
@@ -155,6 +156,7 @@ abstract class CrudResolver extends BaseResolver
 		$repository = $this->getRepository();
 
 		[$input, $addRelations, $removeRelations] = $this->extractRelationsFromInput($args['input']);
+		$input = $this->processMutationsFromInput($input, $context, $repository);
 
 		try {
 			$object = $repository->syncOne($input);
@@ -167,7 +169,7 @@ abstract class CrudResolver extends BaseResolver
 				$object->{$relationName}->unrelate($values);
 			}
 		} catch (\Throwable $e) {
-			if ($context->isDebugMode()) {
+			if (!$context->isDebugMode()) {
 				if ($e->getCode() === '1452') {
 					throw new BadRequestException('Invalid values in relations!');
 				}
@@ -205,10 +207,30 @@ abstract class CrudResolver extends BaseResolver
 
 	/**
 	 * @param array<mixed> $input
+	 * @param \LqGrAphi\GraphQLContext $context
+	 * @param \StORM\Repository<\StORM\Entity> $repository
 	 * @return array<mixed>
+	 * @throws \Exception
 	 */
-	protected function processMutationsFromInput(array $input): array
+	protected function processMutationsFromInput(array $input, GraphQLContext $context, Repository $repository): array
 	{
+		$structure = $repository->getStructure();
+		$mutation = $context->getSelectedMutation();
+
+		foreach ($input as $key => $value) {
+			$column = $structure->getColumn($key);
+
+			if (!$column) {
+				throw new \Exception("Processing column '$key' failed on finding column in structure!");
+			}
+
+			if (!$column->hasMutations()) {
+				continue;
+			}
+
+			$input[$key] = [$mutation => $value,];
+		}
+
 		return $input;
 	}
 

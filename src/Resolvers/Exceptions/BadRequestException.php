@@ -11,6 +11,6 @@ class BadRequestException extends BaseException
 
 	public function getCategory(): string
 	{
-		return (string) ExceptionCategories::BAD_REQUEST->value;
+		return ExceptionCategories::BAD_REQUEST->value;
 	}
 }

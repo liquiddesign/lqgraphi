@@ -11,6 +11,6 @@ class NotFoundException extends BaseException
 
 	public function getCategory(): string
 	{
-		return (string) ExceptionCategories::NOT_FOUND->value;
+		return ExceptionCategories::NOT_FOUND->value;
 	}
 }
