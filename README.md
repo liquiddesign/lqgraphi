@@ -31,14 +31,14 @@ typeRegister:
     resolversNamespace: EshopApi\Resolvers
     queryAndMutationsNamespace: EshopApi\Schema\Types
     types:
-    output:
-        customerGroup: EshopApi\Schema\Outputs\CustomerGroupOutput
-        pricelist: EshopApi\Schema\Outputs\PricelistOutput
-        address: EshopApi\Schema\Outputs\AddressOutput
-        productGetProducts: EshopApi\Schema\Outputs\ProductGetProductsOutput
-    crud:
-        customer: [EshopApi\Schema\Outputs\CustomerOutput, EshopApi\Schema\Inputs\CustomerCreateInput, EshopApi\Schema\Inputs\CustomerUpdateInput]
-        product: [EshopApi\Schema\Outputs\ProductOutput, EshopApi\Schema\Inputs\ProductCreateInput, EshopApi\Schema\Inputs\ProductUpdateInput]
+        output:
+            customerGroup: EshopApi\Schema\Outputs\CustomerGroupOutput
+            pricelist: EshopApi\Schema\Outputs\PricelistOutput
+            address: EshopApi\Schema\Outputs\AddressOutput
+            productGetProducts: EshopApi\Schema\Outputs\ProductGetProductsOutput
+        crud:
+            customer: [EshopApi\Schema\Outputs\CustomerOutput, EshopApi\Schema\Inputs\CustomerCreateInput, EshopApi\Schema\Inputs\CustomerUpdateInput]
+            product: [EshopApi\Schema\Outputs\ProductOutput, EshopApi\Schema\Inputs\ProductCreateInput, EshopApi\Schema\Inputs\ProductUpdateInput]
 ```
 
 ### Entry point
