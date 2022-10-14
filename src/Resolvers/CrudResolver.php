@@ -291,13 +291,14 @@ abstract class CrudResolver extends BaseResolver
 	/**
 	 * @param \StORM\Collection<\StORM\Entity> $collection
 	 * @param \GraphQL\Type\Definition\ResolveInfo $resolveInfo
-	 * @param array<mixed>|null $manyInput
+	 * @param array{'sort': string|null, 'order': string, 'page': int|null, 'limit': int|null, 'filters': string|null}|null $manyInput
+	 * @param array<mixed> $customSelects
 	 * @return array<mixed>
 	 * @throws \LqGrAphi\Resolvers\Exceptions\BadRequestException
 	 * @throws \ReflectionException
 	 * @throws \StORM\Exception\GeneralException
 	 */
-	protected function fetchResult(Collection $collection, ResolveInfo $resolveInfo, ?array $manyInput = null): array
+	protected function fetchResult(Collection $collection, ResolveInfo $resolveInfo, ?array $manyInput = null, array $customSelects = []): array
 	{
 		$fieldSelection = $resolveInfo->getFieldSelection(BaseType::MAX_DEPTH);
 
@@ -313,9 +314,9 @@ abstract class CrudResolver extends BaseResolver
 		$result = [];
 
 		if (!isset($fieldSelection['data'])) {
-			$result = $this->fetchResultHelper($collection, $fieldSelection);
+			$result = $this->fetchResultHelper($collection, $fieldSelection, customSelects: $customSelects);
 		} else {
-			$result['data'] = $this->fetchResultHelper($collection, $fieldSelection['data']);
+			$result['data'] = $this->fetchResultHelper($collection, $fieldSelection['data'], customSelects: $customSelects);
 		}
 
 		if (isset($fieldSelection['onPageCount'])) {
@@ -333,11 +334,12 @@ abstract class CrudResolver extends BaseResolver
 	 * @param \StORM\Collection<\StORM\Entity> $collection
 	 * @param array<mixed> $fieldSelection
 	 * @param string|null $selectOriginalId
+	 * @param array<mixed> $customSelects
 	 * @return array<mixed>
 	 * @throws \ReflectionException
 	 * @throws \StORM\Exception\GeneralException
 	 */
-	private function fetchResultHelper(Collection $collection, array $fieldSelection, ?string $selectOriginalId = null,): array
+	private function fetchResultHelper(Collection $collection, array $fieldSelection, ?string $selectOriginalId = null, array $customSelects = []): array
 	{
 		$objects = [];
 		$structure = $collection->getRepository()->getStructure();
@@ -382,7 +384,18 @@ abstract class CrudResolver extends BaseResolver
 			$ormFieldSelection[$select] = "this.$select";
 		}
 
-		$collection->setSelect(($selectOriginalId ? ['originalId' => $selectOriginalId] : []) + $ormFieldSelection);
+		$localCustomSelects = [];
+
+		foreach ($customSelects as $customSelectKey => $customSelect) {
+			if (\is_array($customSelect)) {
+				continue;
+			}
+
+			$localCustomSelects[$customSelectKey] = $customSelect;
+			unset($customSelects[$customSelectKey]);
+		}
+
+		$collection->setSelect(($selectOriginalId ? ['originalId' => $selectOriginalId] : []) + $ormFieldSelection + $localCustomSelects);
 
 		foreach ($collection->fetchArray(\stdClass::class) as $object) {
 			$objects[$object->{BaseType::ID_NAME}] = \get_object_vars($object);
@@ -406,6 +419,7 @@ abstract class CrudResolver extends BaseResolver
 					->where('relation.' . BaseType::ID_NAME, $keys),
 				$fieldSelection[$relationName],
 				'relation.' . BaseType::ID_NAME,
+				$customSelects[$relationName] ?? [],
 			);
 
 			foreach ($objects as $object) {
@@ -430,6 +444,7 @@ abstract class CrudResolver extends BaseResolver
 					->where('relationNxN.' . $relation->getSourceViaKey(), $keys),
 				$fieldSelection[$relationName],
 				'relationNxN.' . $relation->getSourceViaKey(),
+				$customSelects[$relationName] ?? [],
 			);
 
 			foreach (\array_keys($objects) as $objectKey) {

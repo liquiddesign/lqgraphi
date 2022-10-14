@@ -237,6 +237,13 @@ To help working with API there is some automatic improvements
 
 Filters are input fields of type JSON, which are parsed to repository *filter** functions.
 
+#### Fetch result
+
+There is universal fetch function. You just need to pass collection with ResolveInfo. It will take care of retrieving only data you asked in most efficient way.
+
+All selects made in collection are cleared due to safety reasons. You can pass *$customSelects* which will be applied without any change directly to SQL, so be careful!
+This array can be recursive with relations. It will be passed to appropriate functions.
+
 ## Roadmap
 - Persisted queries with Redis/KeyDB
 - Security - guards, login
