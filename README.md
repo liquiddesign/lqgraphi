@@ -43,44 +43,26 @@ typeRegister:
 
 ### Entry point
 
-In you entry point (probably `index.php`) you need to call handler. `GraphQLHandler::handle()` returns serializable array which you need to transform to JSON and send to output.
+In you entry point (probably `index.php`) you need to call handler. You just need to create container and pass it to `\LqGrAphi\Handlers\IndexHandler::handle`.
 
-Example of `index.php`:
+Minimal example of `index.php`:
 
 ```php
-$container = \EshopApi\Bootstrap::boot()->createContainer();
+require __DIR__ . '/vendor/autoload.php';
 
-/** @var \LqGrAphi\GraphQLHandler $graphql */
-$graphql = $container->getByType(\LqGrAphi\GraphQLHandler::class);
-$request = $container->getByType(\Nette\Http\Request::class);
-$response = $container->getByType(\Nette\Http\Response::class);
-
-(new \Nette\Application\Responses\JsonResponse($graphql->handle()))->send($request, $response);
+\LqGrAphi\Handlers\IndexHandler::handle(\EshopApi\Bootstrap::boot()->createContainer());
 ```
-
-Full example of `index.php` can be found [here](https://github.com/liquiddesign/lqgraphi/tree/main/src/examples/index.php).
 
 ### Sandbox
 
-Apollo Sandbox can be optionally included in entry point. HTML bundle is available in examples folder.
+Apollo Sandbox is enabled by default for debug connections based on environment file.
 
-You have to add it to response in entry point.<br>
-Example below only show sandbox when in debug mode. Advantage of using sandbox like in example is that you have full access to Tracy.
-
+You can permanently disable it:
 ```php
-if ($graphql->getDebugFlag() && $request->getMethod() === 'GET') {
-	/** @var \Nette\Bridges\ApplicationLatte\LatteFactory $latteFactory */
-	$latteFactory = $container->getByType(\Nette\Bridges\ApplicationLatte\LatteFactory::class);
+require __DIR__ . '/vendor/autoload.php';
 
-	$compiledSandbox = $latteFactory->create()->renderToString(__DIR__ . '/apollo.sandbox.latte', ['baseUrl' => $request->getUrl()->getBaseUrl()]);
-
-	(new \Nette\Application\Responses\TextResponse($compiledSandbox))->send($request, $response);
-
-	die;
-}
+\LqGrAphi\Handlers\IndexHandler::handle(\EshopApi\Bootstrap::boot()->createContainer(), false);
 ```
-
-Full example of `index.php` and bundled html file of sandbox can be found [here](https://github.com/liquiddesign/lqgraphi/tree/main/src/examples).
 
 ### Queries and Mutations
 
@@ -88,7 +70,7 @@ Location of queries and mutations is set via config `queryAndMutationsNamespace`
 Query needs to extend `\LqGrAphi\Schema\BaseQuery` and mutation `\LqGrAphi\Schema\BaseMutation`.<br><br>
 These types are automatically loaded only first time when schema is created and cached.
 All other requests uses cached schema, due to that script don't need to create schema for every request and performance is not decreased.
-This approach has some limitations: Queries and mutations are not registered in container so you cant use DI. All these classes will receive container as first argument.
+This approach has some limitations: Queries and mutations are not registered in container, so you cant use DI. All these classes will receive container as first argument.
 
 ### Types
 
@@ -130,7 +112,7 @@ public function getMany(array $rootValue, array $args, GraphQLContext $context, 
 }
 ```
 
-Recommended way of configuration
+Recommended way of configuration:
 
 ```neon
 services:
@@ -205,7 +187,7 @@ class CustomerUpdateInput extends BaseInput
 }
 ```
 
- register types in config
+ register types in config as crud types
 ```neon
 typeRegister:
     types:
@@ -235,7 +217,7 @@ To help working with API there is some automatic improvements
 
 #### Filtering
 
-Filters are input fields of type JSON, which are parsed to repository *filter** functions.
+Filters are input fields of type JSON, which are parsed to repository *filter* functions.
 
 #### Fetch result
 
@@ -247,7 +229,6 @@ System will set detected language (if supported) as primary language for all SQL
 If no language in "Accept-Language" header is supported, then primary language from settings is used.
 
 ## Roadmap
-- 
 - Persisted queries with Redis/KeyDB
 - Security - guards, login
 - Automatic testing

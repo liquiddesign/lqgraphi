@@ -6,13 +6,11 @@ namespace LqGrAphi\Handlers;
 
 abstract class IndexHandler
 {
-	public static function handle(?\Nette\DI\Container $container = null): void
+	public static function handle(\Nette\DI\Container $container, bool $sandbox = true): void
 	{
 		if (\is_file($maintenance = __DIR__ . '/maintenance.php')) {
 			require $maintenance;
 		}
-
-		$container ??= \Base\Bootstrap::boot()->createContainer();
 
 		$graphql = $container->getByType(\LqGrAphi\GraphQLHandler::class);
 		$request = $container->getByType(\Nette\Http\Request::class);
@@ -22,7 +20,7 @@ abstract class IndexHandler
 			die;
 		}
 
-		if ($graphql->getDebugFlag() && $request->getMethod() === 'GET') {
+		if ($sandbox && $graphql->getDebugFlag() && $request->getMethod() === 'GET') {
 			/** @var \Nette\Bridges\ApplicationLatte\LatteFactory $latteFactory */
 			$latteFactory = $container->getByType(\Nette\Bridges\ApplicationLatte\LatteFactory::class);
 
