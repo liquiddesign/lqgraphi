@@ -241,9 +241,6 @@ Filters are input fields of type JSON, which are parsed to repository *filter** 
 
 There is universal fetch function. You just need to pass collection with ResolveInfo. It will take care of retrieving only data you asked in most efficient way.
 
-All selects made in collection are cleared due to safety reasons. You can pass *$customSelects* which will be applied without any change directly to SQL, so be careful!
-This array can be recursive with relations. It will be passed to appropriate functions.
-
 ### Language mutations
 If you need to use different language mutation, you can use HTTP header "Accept-Language".
 System will set detected language (if supported) as primary language for all SQL queries.
