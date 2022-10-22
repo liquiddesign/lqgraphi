@@ -292,13 +292,12 @@ abstract class CrudResolver extends BaseResolver
 	 * @param \StORM\Collection<\StORM\Entity> $collection
 	 * @param \GraphQL\Type\Definition\ResolveInfo $resolveInfo
 	 * @param array{'sort': string|null, 'order': string, 'page': int|null, 'limit': int|null, 'filters': string|null}|null $manyInput
-	 * @param array<mixed> $customSelects
 	 * @return array<mixed>
 	 * @throws \LqGrAphi\Resolvers\Exceptions\BadRequestException
 	 * @throws \ReflectionException
 	 * @throws \StORM\Exception\GeneralException
 	 */
-	protected function fetchResult(Collection $collection, ResolveInfo $resolveInfo, ?array $manyInput = null, array $customSelects = []): array
+	protected function fetchResult(Collection $collection, ResolveInfo $resolveInfo, ?array $manyInput = null): array
 	{
 		$fieldSelection = $resolveInfo->getFieldSelection(BaseType::MAX_DEPTH);
 
@@ -314,9 +313,9 @@ abstract class CrudResolver extends BaseResolver
 		$result = [];
 
 		if (!isset($fieldSelection['data'])) {
-			$result = $this->fetchResultHelper($collection, $fieldSelection, customSelects: $customSelects);
+			$result = $this->fetchResultHelper($collection, $fieldSelection);
 		} else {
-			$result['data'] = $this->fetchResultHelper($collection, $fieldSelection['data'], customSelects: $customSelects);
+			$result['data'] = $this->fetchResultHelper($collection, $fieldSelection['data']);
 		}
 
 		if (isset($fieldSelection['onPageCount'])) {
@@ -334,12 +333,11 @@ abstract class CrudResolver extends BaseResolver
 	 * @param \StORM\Collection<\StORM\Entity> $collection
 	 * @param array<mixed> $fieldSelection
 	 * @param string|null $selectOriginalId
-	 * @param array<mixed> $customSelects
 	 * @return array<mixed>
 	 * @throws \ReflectionException
 	 * @throws \StORM\Exception\GeneralException
 	 */
-	private function fetchResultHelper(Collection $collection, array $fieldSelection, ?string $selectOriginalId = null, array $customSelects = []): array
+	private function fetchResultHelper(Collection $collection, array $fieldSelection, ?string $selectOriginalId = null): array
 	{
 		$objects = [];
 		$structure = $collection->getRepository()->getStructure();
@@ -359,6 +357,7 @@ abstract class CrudResolver extends BaseResolver
 		));
 
 		$ormFieldSelection = [BaseType::ID_NAME => 'this.' . BaseType::ID_NAME];
+		$selectModifiers = $collection->getModifiers()['SELECT'] ?? [];
 
 		foreach (\array_keys($fieldSelection) as $select) {
 			if (Arrays::contains($relations, $select)) {
@@ -372,6 +371,10 @@ abstract class CrudResolver extends BaseResolver
 			}
 
 			if (!$column = $structure->getColumn($select)) {
+				if (isset($selectModifiers[$select])) {
+					$ormFieldSelection[$select] = $selectModifiers[$select];
+				}
+
 				continue;
 			}
 
@@ -384,18 +387,7 @@ abstract class CrudResolver extends BaseResolver
 			$ormFieldSelection[$select] = "this.$select";
 		}
 
-		$localCustomSelects = [];
-
-		foreach ($customSelects as $customSelectKey => $customSelect) {
-			if (\is_array($customSelect)) {
-				continue;
-			}
-
-			$localCustomSelects[$customSelectKey] = $customSelect;
-			unset($customSelects[$customSelectKey]);
-		}
-
-		$collection->setSelect(($selectOriginalId ? ['originalId' => $selectOriginalId] : []) + $ormFieldSelection + $localCustomSelects);
+		$collection->setSelect(($selectOriginalId ? ['originalId' => $selectOriginalId] : []) + $ormFieldSelection);
 
 		foreach ($collection->fetchArray(\stdClass::class) as $object) {
 			$objects[$object->{BaseType::ID_NAME}] = \get_object_vars($object);
@@ -419,7 +411,6 @@ abstract class CrudResolver extends BaseResolver
 					->where('relation.' . BaseType::ID_NAME, $keys),
 				$fieldSelection[$relationName],
 				'relation.' . BaseType::ID_NAME,
-				$customSelects[$relationName] ?? [],
 			);
 
 			foreach ($objects as $object) {
@@ -444,7 +435,6 @@ abstract class CrudResolver extends BaseResolver
 					->where('relationNxN.' . $relation->getSourceViaKey(), $keys),
 				$fieldSelection[$relationName],
 				'relationNxN.' . $relation->getSourceViaKey(),
-				$customSelects[$relationName] ?? [],
 			);
 
 			foreach (\array_keys($objects) as $objectKey) {
