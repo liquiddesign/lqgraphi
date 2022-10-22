@@ -48,7 +48,7 @@ abstract class CrudQuery extends BaseQuery
 				"{$baseName}Many" => [
 					'type' => $this->typeRegister->getManyOutputType($this->getName()),
 					'args' => [
-						'manyInput' => $this->typeRegister->getManyInput(),
+						'manyInput' => $this->typeRegister->getManyInputWithDefaultValue(),
 					],
 				],
 			],
@@ -58,7 +58,7 @@ abstract class CrudQuery extends BaseQuery
 			$localConfig['fields']["{$baseName}Collection"] = [
 				'type' => $this->typeRegister->getManyOutputType($this->getName()),
 				'args' => [
-					'manyInput' => $this->typeRegister->getManyInput(),
+					'manyInput' => $this->typeRegister->getManyInputWithDefaultValue(),
 				],
 			];
 		}

@@ -411,4 +411,16 @@ class TypeRegister extends Type
 			],
 		]);
 	}
+
+	/**
+	 * @param mixed|null $defaultValue
+	 * @return array<mixed>
+	 */
+	public function getManyInputWithDefaultValue(mixed $defaultValue = null): array
+	{
+		return [
+			'type' => $this->getManyInput(),
+			'defaultValue' => $defaultValue,
+		];
+	}
 }
