@@ -388,11 +388,26 @@ class TypeRegister extends Type
 		return $this->types['manyInput'] ??= new InputObjectType([
 			'name' => 'ManyInput',
 			'fields' => [
-				'sort' => $this::string(),
-				'order' => $this->orderEnum(),
-				'limit' => $this::int(),
-				'page' => $this::int(),
-				'filters' => $this->JSON(),
+				'sort' => [
+					'type' => $this::string(),
+					'defaultValue' => BaseType::DEFAULT_SORT,
+				],
+				'order' => [
+					'type' => $this::orderEnum(),
+					'defaultValue' => BaseType::DEFAULT_ORDER,
+				],
+				'limit' => [
+					'type' => $this::int(),
+					'defaultValue' => BaseType::DEFAULT_LIMIT,
+				],
+				'page' => [
+					'type' => $this::int(),
+					'defaultValue' => BaseType::DEFAULT_PAGE,
+				],
+				'filters' => [
+					'type' => $this::JSON(),
+					'defaultValue' => null,
+				],
 			],
 		]);
 	}
