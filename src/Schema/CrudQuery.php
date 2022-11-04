@@ -6,6 +6,7 @@ use Common\DB\IGeneralRepository;
 use GraphQL\Type\Definition\NullableType;
 use GraphQL\Type\Definition\Type;
 use Nette\DI\Container;
+use Nette\Utils\Strings;
 use StORM\DIConnection;
 use StORM\Repository;
 
@@ -79,6 +80,13 @@ abstract class CrudQuery extends BaseQuery
 	public function getOutputType(): Type
 	{
 		return $this->typeRegister->getOutputType($this->getName());
+	}
+
+	public function getName(): string
+	{
+		$reflection = new \ReflectionClass($this->getClass());
+
+		return Strings::lower($reflection->getShortName());
 	}
 
 	/**
