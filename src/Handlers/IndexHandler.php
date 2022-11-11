@@ -31,7 +31,7 @@ abstract class IndexHandler
 
 			(new \Nette\Application\Responses\JsonResponse(['status' => 'ok']))->send($request, $response);
 
-			die();
+			die;
 		}
 
 		if ($sandbox && $graphql->getDebugFlag() && $request->getMethod() === 'GET') {
