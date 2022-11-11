@@ -77,16 +77,16 @@ abstract class CrudQuery extends BaseQuery
 		return [];
 	}
 
+	public function getOutputType(): Type
+	{
+		return $this->typeRegister->getOutputType($this->getName());
+	}
+
 	public function getName(): string
 	{
 		$reflection = new \ReflectionClass($this->getClass());
 
 		return Strings::lower($reflection->getShortName());
-	}
-
-	public function getOutputType(): Type
-	{
-		return $this->typeRegister->getOutputType($this->getName());
 	}
 
 	/**
