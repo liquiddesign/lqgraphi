@@ -17,7 +17,7 @@ abstract class IndexHandler
 		$response = $container->getByType(\Nette\Http\Response::class);
 
 		if ($request->getMethod() === 'OPTIONS') {
-			$response->setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:*');
+			$response->setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1');
 			$response->setHeader('Access-Control-Allow-Methods', 'POST, GET');
 			$response->setHeader('Access-Control-Max-Age', '86400');
 
