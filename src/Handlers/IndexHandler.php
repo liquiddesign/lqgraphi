@@ -27,8 +27,11 @@ abstract class IndexHandler
 			$response->setHeader('Access-Control-Allow-Origin', $accessControlAllowOrigin);
 			$response->setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
 			$response->setHeader('Access-Control-Max-Age', '86400');
+			$response->setContentType('application/json');
 
-			die;
+			(new \Nette\Application\Responses\JsonResponse(['status' => 'ok']))->send($request, $response);
+
+			die();
 		}
 
 		if ($sandbox && $graphql->getDebugFlag() && $request->getMethod() === 'GET') {
