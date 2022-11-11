@@ -18,18 +18,18 @@ abstract class IndexHandler
 		$request = $container->getByType(\Nette\Http\Request::class);
 		$response = $container->getByType(\Nette\Http\Response::class);
 
+		if (!$accessControlAllowOrigin) {
+			$accessControlAllowOrigin = (string) $request->getRemoteAddress();
+			Debugger::log($accessControlAllowOrigin);
+		}
+
+		$response->setHeader('Access-Control-Allow-Origin', $accessControlAllowOrigin);
+		$response->setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+		$response->setHeader('Access-Control-Max-Age', '86400');
+		$response->setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Requested-With');
+		$response->setContentType('application/json');
+
 		if ($request->getMethod() === 'OPTIONS') {
-			if (!$accessControlAllowOrigin) {
-				$accessControlAllowOrigin = (string) $request->getRemoteAddress();
-				Debugger::log($accessControlAllowOrigin);
-			}
-
-			$response->setHeader('Access-Control-Allow-Origin', $accessControlAllowOrigin);
-			$response->setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-			$response->setHeader('Access-Control-Max-Age', '86400');
-			$response->setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Requested-With');
-			$response->setContentType('application/json');
-
 			(new \Nette\Application\Responses\JsonResponse(['status' => 'ok']))->send($request, $response);
 
 			die;
