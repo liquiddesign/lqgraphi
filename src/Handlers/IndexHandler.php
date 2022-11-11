@@ -27,6 +27,7 @@ abstract class IndexHandler
 			$response->setHeader('Access-Control-Allow-Origin', $accessControlAllowOrigin);
 			$response->setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
 			$response->setHeader('Access-Control-Max-Age', '86400');
+			$response->setHeader('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers, X-Requested-With');
 			$response->setContentType('application/json');
 
 			(new \Nette\Application\Responses\JsonResponse(['status' => 'ok']))->send($request, $response);
