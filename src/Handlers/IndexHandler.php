@@ -20,7 +20,7 @@ abstract class IndexHandler
 
 		if ($request->getMethod() === 'OPTIONS') {
 			if (!$accessControlAllowOrigin) {
-				$accessControlAllowOrigin = (string) $request->getUrl();
+				$accessControlAllowOrigin = (string) $request->getRemoteAddress();
 				Debugger::log($accessControlAllowOrigin);
 			}
 
