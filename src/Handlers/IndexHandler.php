@@ -6,7 +6,7 @@ namespace LqGrAphi\Handlers;
 
 abstract class IndexHandler
 {
-	public static function handle(\Nette\DI\Container $container, bool $sandbox = true): void
+	public static function handle(\Nette\DI\Container $container, bool $sandbox = true, string $accessControlAllowOrigin = 'http://127.0.0.1'): void
 	{
 		if (\is_file($maintenance = __DIR__ . '/maintenance.php')) {
 			require $maintenance;
@@ -17,7 +17,7 @@ abstract class IndexHandler
 		$response = $container->getByType(\Nette\Http\Response::class);
 
 		if ($request->getMethod() === 'OPTIONS') {
-			$response->setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1');
+			$response->setHeader('Access-Control-Allow-Origin', $accessControlAllowOrigin);
 			$response->setHeader('Access-Control-Allow-Methods', 'POST, GET');
 			$response->setHeader('Access-Control-Max-Age', '86400');
 
