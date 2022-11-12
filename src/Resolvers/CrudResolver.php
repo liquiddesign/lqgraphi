@@ -124,13 +124,13 @@ abstract class CrudResolver extends BaseResolver
 		$input = $this->processMutationsFromInput($input, $context, $repository);
 
 		try {
-			$object = $repository->syncOne($input);
+			$object = $repository->syncOne($input, ignore: false);
 
 			foreach ($addRelations as $relationName => $values) {
 				$object->{$relationName}->relate($values);
 			}
 		} catch (\Throwable $e) {
-			if ($e->getCode() === '1452') {
+			if ($e->getCode() === '23000') {
 				throw new BadRequestException('Invalid values in relations!');
 			}
 
@@ -159,7 +159,7 @@ abstract class CrudResolver extends BaseResolver
 		$input = $this->processMutationsFromInput($input, $context, $repository);
 
 		try {
-			$object = $repository->syncOne($input);
+			$object = $repository->syncOne($input, ignore: false);
 
 			foreach ($addRelations as $relationName => $values) {
 				$object->{$relationName}->relate($values);
@@ -170,7 +170,7 @@ abstract class CrudResolver extends BaseResolver
 			}
 		} catch (\Throwable $e) {
 			if (!$context->isDebugMode()) {
-				if ($e->getCode() === '1452') {
+				if ($e->getCode() === '23000') {
 					throw new BadRequestException('Invalid values in relations!');
 				}
 
