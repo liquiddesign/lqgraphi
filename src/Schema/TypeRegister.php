@@ -182,6 +182,9 @@ class TypeRegister extends Type
 	 * @param array<string> $forceRequired
 	 * @param array<string> $forceOptional
 	 * @param bool $forceAllOptional
+	 * @param bool $includeId
+	 * @param bool $setDefaultValues
+	 * @param \LqGrAphi\Schema\InputRelationFieldsEnum $inputRelationFieldsEnum
 	 * @return array<mixed>
 	 * @throws \ReflectionException
 	 */
@@ -310,6 +313,80 @@ class TypeRegister extends Type
 		}
 
 		return $fields;
+	}
+
+	/**
+	 * @param class-string<\StORM\Entity> $class
+	 * @param array<string>|null $include
+	 * @param array<string> $exclude
+	 * @param array<string> $forceRequired
+	 * @param array<string> $forceOptional
+	 * @param bool $forceAllOptional
+	 * @param bool $includeId
+	 * @param bool $setDefaultValues
+	 * @param \LqGrAphi\Schema\InputRelationFieldsEnum $inputRelationFieldsEnum
+	 * @return array<mixed>
+	 * @throws \ReflectionException
+	 */
+	public function createCrudCreateInputFieldsFromClass(
+		string $class,
+		?array $include = null,
+		array $exclude = [],
+		array $forceRequired = [],
+		array $forceOptional = [],
+		bool $forceAllOptional = false,
+		bool $includeId = false,
+		bool $setDefaultValues = true,
+		InputRelationFieldsEnum $inputRelationFieldsEnum = InputRelationFieldsEnum::ONLY_ADD,
+	): array {
+		return $this->createInputFieldsFromClass(
+			$class,
+			$include,
+			$exclude,
+			$forceRequired,
+			$forceOptional,
+			$forceAllOptional,
+			$includeId,
+			$setDefaultValues,
+			$inputRelationFieldsEnum
+		);
+	}
+
+	/**
+	 * @param class-string<\StORM\Entity> $class
+	 * @param array<string>|null $include
+	 * @param array<string> $exclude
+	 * @param array<string> $forceRequired
+	 * @param array<string> $forceOptional
+	 * @param bool $forceAllOptional
+	 * @param bool $includeId
+	 * @param bool $setDefaultValues
+	 * @param \LqGrAphi\Schema\InputRelationFieldsEnum $inputRelationFieldsEnum
+	 * @return array<mixed>
+	 * @throws \ReflectionException
+	 */
+	public function createCrudUpdateInputFieldsFromClass(
+		string $class,
+		?array $include = null,
+		array $exclude = [],
+		array $forceRequired = [],
+		array $forceOptional = [],
+		bool $forceAllOptional = true,
+		bool $includeId = true,
+		bool $setDefaultValues = false,
+		InputRelationFieldsEnum $inputRelationFieldsEnum = InputRelationFieldsEnum::ALL,
+	): array {
+		return $this->createInputFieldsFromClass(
+			$class,
+			$include,
+			$exclude,
+			$forceRequired,
+			$forceOptional,
+			$forceAllOptional,
+			$includeId,
+			$setDefaultValues,
+			$inputRelationFieldsEnum
+		);
 	}
 
 	public function getInputType(string $name): InputType
