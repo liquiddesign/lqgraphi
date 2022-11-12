@@ -19,16 +19,16 @@ class GeneratorScripts
 	 */
 	public static function generateOutputs(array $outputs, string $targetPath, string $targetNamespace): void
 	{
+		if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
+			$targetPath .= '/';
+		}
+
 		foreach ($outputs as $output => $classString) {
 			$output = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($output));
 
-			if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
-				$targetPath .= '/';
-			}
+			$localTargetPath = "$targetPath{$output}Output.php";
 
-			$targetPath = "$targetPath{$output}Output.php";
-
-			if (\is_file($targetPath)) {
+			if (\is_file($localTargetPath)) {
 				continue;
 			}
 
@@ -57,7 +57,7 @@ class GeneratorScripts
 
 			$printer = new Nette\PhpGenerator\Printer();
 
-			Nette\Utils\FileSystem::write($targetPath, $printer->printFile($file));
+			Nette\Utils\FileSystem::write($localTargetPath, $printer->printFile($file));
 		}
 	}
 
@@ -68,16 +68,16 @@ class GeneratorScripts
 	 */
 	public static function generateCreateInputs(array $inputs, string $targetPath, string $targetNamespace): void
 	{
+		if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
+			$targetPath .= '/';
+		}
+
 		foreach ($inputs as $input => $classString) {
 			$input = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($input));
 
-			if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
-				$targetPath .= '/';
-			}
+			$localTargetPath = "$targetPath{$input}CreateInput.php";
 
-			$targetPath = "$targetPath{$input}CreateInput.php";
-
-			if (\is_file($targetPath)) {
+			if (\is_file($localTargetPath)) {
 				continue;
 			}
 
@@ -106,7 +106,7 @@ class GeneratorScripts
 
 			$printer = new Nette\PhpGenerator\Printer();
 
-			Nette\Utils\FileSystem::write($targetPath, $printer->printFile($file));
+			Nette\Utils\FileSystem::write($localTargetPath, $printer->printFile($file));
 		}
 	}
 
@@ -117,16 +117,16 @@ class GeneratorScripts
 	 */
 	public static function generateUpdateInputs(array $inputs, string $targetPath, string $targetNamespace): void
 	{
+		if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
+			$targetPath .= '/';
+		}
+
 		foreach ($inputs as $input => $classString) {
 			$input = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($input));
 
-			if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
-				$targetPath .= '/';
-			}
+			$localTargetPath = "$targetPath{$input}UpdateInput.php";
 
-			$targetPath = "$targetPath{$input}UpdateInput.php";
-
-			if (\is_file($targetPath)) {
+			if (\is_file($localTargetPath)) {
 				continue;
 			}
 
@@ -155,7 +155,7 @@ class GeneratorScripts
 
 			$printer = new Nette\PhpGenerator\Printer();
 
-			Nette\Utils\FileSystem::write($targetPath, $printer->printFile($file));
+			Nette\Utils\FileSystem::write($localTargetPath, $printer->printFile($file));
 		}
 	}
 
@@ -166,16 +166,16 @@ class GeneratorScripts
 	 */
 	public static function generateCrudQueries(array $queries, string $targetPath, string $targetNamespace): void
 	{
+		if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
+			$targetPath .= '/';
+		}
+
 		foreach ($queries as $query => $classString) {
 			$query = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($query));
 
-			if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
-				$targetPath .= '/';
-			}
+			$localTargetPath = "$targetPath{$query}Query.php";
 
-			$targetPath = "$targetPath{$query}Query.php";
-
-			if (\is_file($targetPath)) {
+			if (\is_file($localTargetPath)) {
 				continue;
 			}
 
@@ -199,7 +199,7 @@ class GeneratorScripts
 
 			$printer = new Nette\PhpGenerator\Printer();
 
-			Nette\Utils\FileSystem::write($targetPath, $printer->printFile($file));
+			Nette\Utils\FileSystem::write($localTargetPath, $printer->printFile($file));
 		}
 	}
 
@@ -210,16 +210,16 @@ class GeneratorScripts
 	 */
 	public static function generateCrudMutations(array $mutations, string $targetPath, string $targetNamespace): void
 	{
+		if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
+			$targetPath .= '/';
+		}
+
 		foreach ($mutations as $mutation => $classString) {
 			$mutation = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($mutation));
 
-			if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
-				$targetPath .= '/';
-			}
+			$localTargetPath = "$targetPath{$mutation}Mutation.php";
 
-			$targetPath = "$targetPath{$mutation}Mutation.php";
-
-			if (\is_file($targetPath)) {
+			if (\is_file($localTargetPath)) {
 				continue;
 			}
 
@@ -243,7 +243,7 @@ class GeneratorScripts
 
 			$printer = new Nette\PhpGenerator\Printer();
 
-			Nette\Utils\FileSystem::write($targetPath, $printer->printFile($file));
+			Nette\Utils\FileSystem::write($localTargetPath, $printer->printFile($file));
 		}
 	}
 
@@ -254,16 +254,16 @@ class GeneratorScripts
 	 */
 	public static function generateCrudResolvers(array $resolvers, string $targetPath, string $targetNamespace): void
 	{
+		if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
+			$targetPath .= '/';
+		}
+
 		foreach ($resolvers as $resolver => $classString) {
 			$resolver = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($resolver));
 
-			if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
-				$targetPath .= '/';
-			}
+			$localTargetPath = "$targetPath{$resolver}Resolver.php";
 
-			$targetPath = "$targetPath{$resolver}Resolver.php";
-
-			if (\is_file($targetPath)) {
+			if (\is_file($localTargetPath)) {
 				continue;
 			}
 
@@ -287,7 +287,7 @@ class GeneratorScripts
 
 			$printer = new Nette\PhpGenerator\Printer();
 
-			Nette\Utils\FileSystem::write($targetPath, $printer->printFile($file));
+			Nette\Utils\FileSystem::write($localTargetPath, $printer->printFile($file));
 		}
 	}
 
@@ -298,16 +298,16 @@ class GeneratorScripts
 	 */
 	public static function generateExtendedCrudResolvers(array $resolvers, string $targetPath, string $targetNamespace): void
 	{
+		if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
+			$targetPath .= '/';
+		}
+
 		foreach ($resolvers as $resolver => $classString) {
 			$resolver = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($resolver));
 
-			if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
-				$targetPath .= '/';
-			}
+			$localTargetPath = "$targetPath{$resolver}Resolver.php";
 
-			$targetPath = "$targetPath{$resolver}Resolver.php";
-
-			if (\is_file($targetPath)) {
+			if (\is_file($localTargetPath)) {
 				continue;
 			}
 
@@ -327,7 +327,7 @@ class GeneratorScripts
 
 			$printer = new Nette\PhpGenerator\Printer();
 
-			Nette\Utils\FileSystem::write($targetPath, $printer->printFile($file));
+			Nette\Utils\FileSystem::write($localTargetPath, $printer->printFile($file));
 		}
 	}
 
@@ -338,16 +338,16 @@ class GeneratorScripts
 	 */
 	public static function generateExtendedCrudQueries(array $types, string $targetPath, string $targetNamespace): void
 	{
+		if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
+			$targetPath .= '/';
+		}
+
 		foreach ($types as $type => $classString) {
 			$type = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($type));
 
-			if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
-				$targetPath .= '/';
-			}
+			$localTargetPath = "$targetPath{$type}Query.php";
 
-			$targetPath = "$targetPath{$type}Query.php";
-
-			if (\is_file($targetPath)) {
+			if (\is_file($localTargetPath)) {
 				continue;
 			}
 
@@ -367,7 +367,7 @@ class GeneratorScripts
 
 			$printer = new Nette\PhpGenerator\Printer();
 
-			Nette\Utils\FileSystem::write($targetPath, $printer->printFile($file));
+			Nette\Utils\FileSystem::write($localTargetPath, $printer->printFile($file));
 		}
 	}
 
@@ -378,16 +378,16 @@ class GeneratorScripts
 	 */
 	public static function generateExtendedCrudMutations(array $types, string $targetPath, string $targetNamespace): void
 	{
+		if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
+			$targetPath .= '/';
+		}
+
 		foreach ($types as $type => $classString) {
 			$type = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($type));
 
-			if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
-				$targetPath .= '/';
-			}
+			$localTargetPath = "$targetPath{$type}Mutation.php";
 
-			$targetPath = "$targetPath{$type}Mutation.php";
-
-			if (\is_file($targetPath)) {
+			if (\is_file($localTargetPath)) {
 				continue;
 			}
 
@@ -407,7 +407,7 @@ class GeneratorScripts
 
 			$printer = new Nette\PhpGenerator\Printer();
 
-			Nette\Utils\FileSystem::write($targetPath, $printer->printFile($file));
+			Nette\Utils\FileSystem::write($localTargetPath, $printer->printFile($file));
 		}
 	}
 }
