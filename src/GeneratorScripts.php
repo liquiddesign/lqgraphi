@@ -290,4 +290,112 @@ class GeneratorScripts
 			Nette\Utils\FileSystem::write($targetPath, $printer->printFile($file));
 		}
 	}
+
+	/**
+	 * @param array<string, class-string> $resolvers
+	 * @param string $targetPath
+	 * @param string $targetNamespace
+	 */
+	public static function generateExtendedCrudResolvers(array $resolvers, string $targetPath, string $targetNamespace): void
+	{
+		foreach ($resolvers as $resolver => $classString) {
+			$resolver = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($resolver));
+
+			if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
+				$targetPath .= '/';
+			}
+
+			$targetPath = "$targetPath{$resolver}Resolver.php";
+
+			if (\is_file($targetPath)) {
+				continue;
+			}
+
+			$file = new Nette\PhpGenerator\PhpFile();
+			$file->addComment('This file is auto-generated.');
+			$file->setStrictTypes();
+
+			$targetNamespace = $file->addNamespace($targetNamespace);
+
+			$class = $targetNamespace->addClass("{$resolver}Resolver");
+
+			$class->setExtends($classString);
+
+			$printer = new Nette\PhpGenerator\Printer();
+
+			Nette\Utils\FileSystem::write($targetPath, $printer->printFile($file));
+		}
+	}
+
+	/**
+	 * @param array<string, class-string> $types
+	 * @param string $targetPath
+	 * @param string $targetNamespace
+	 */
+	public static function generateExtendedCrudQueries(array $types, string $targetPath, string $targetNamespace): void
+	{
+		foreach ($types as $type => $classString) {
+			$type = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($type));
+
+			if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
+				$targetPath .= '/';
+			}
+
+			$targetPath = "$targetPath{$type}Query.php";
+
+			if (\is_file($targetPath)) {
+				continue;
+			}
+
+			$file = new Nette\PhpGenerator\PhpFile();
+			$file->addComment('This file is auto-generated.');
+			$file->setStrictTypes();
+
+			$targetNamespace = $file->addNamespace($targetNamespace);
+
+			$class = $targetNamespace->addClass("{$type}Query");
+
+			$class->setExtends($classString);
+
+			$printer = new Nette\PhpGenerator\Printer();
+
+			Nette\Utils\FileSystem::write($targetPath, $printer->printFile($file));
+		}
+	}
+
+	/**
+	 * @param array<string, class-string> $types
+	 * @param string $targetPath
+	 * @param string $targetNamespace
+	 */
+	public static function generateExtendedCrudMutations(array $types, string $targetPath, string $targetNamespace): void
+	{
+		foreach ($types as $type => $classString) {
+			$type = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($type));
+
+			if (!Nette\Utils\Strings::endsWith($targetPath, '/')) {
+				$targetPath .= '/';
+			}
+
+			$targetPath = "$targetPath{$type}Mutation.php";
+
+			if (\is_file($targetPath)) {
+				continue;
+			}
+
+			$file = new Nette\PhpGenerator\PhpFile();
+			$file->addComment('This file is auto-generated.');
+			$file->setStrictTypes();
+
+			$targetNamespace = $file->addNamespace($targetNamespace);
+
+			$class = $targetNamespace->addClass("{$type}Mutation");
+
+			$class->setExtends($classString);
+
+			$printer = new Nette\PhpGenerator\Printer();
+
+			Nette\Utils\FileSystem::write($targetPath, $printer->printFile($file));
+		}
+	}
 }
