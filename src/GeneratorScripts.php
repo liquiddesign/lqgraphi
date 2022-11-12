@@ -319,6 +319,10 @@ class GeneratorScripts
 
 			$class = $targetNamespace->addClass("{$resolver}Resolver");
 
+			if (!Nette\Utils\Strings::endsWith($classString, 'Resolver')) {
+				$classString .= 'Resolver';
+			}
+
 			$class->setExtends($classString);
 
 			$printer = new Nette\PhpGenerator\Printer();
@@ -355,6 +359,10 @@ class GeneratorScripts
 
 			$class = $targetNamespace->addClass("{$type}Query");
 
+			if (!Nette\Utils\Strings::endsWith($classString, 'Query')) {
+				$classString .= 'Query';
+			}
+
 			$class->setExtends($classString);
 
 			$printer = new Nette\PhpGenerator\Printer();
@@ -390,6 +398,10 @@ class GeneratorScripts
 			$targetNamespace = $file->addNamespace($targetNamespace);
 
 			$class = $targetNamespace->addClass("{$type}Mutation");
+
+			if (!Nette\Utils\Strings::endsWith($classString, 'Mutation')) {
+				$classString .= 'Mutation';
+			}
 
 			$class->setExtends($classString);
 
