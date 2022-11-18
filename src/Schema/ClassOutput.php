@@ -2,10 +2,10 @@
 
 namespace LqGrAphi\Schema;
 
-interface EntityOutput
+interface ClassOutput
 {
 	/**
-	 * @return class-string<\StORM\Entity>
+	 * @return class-string
 	 */
 	public static function getClass(): string;
 }

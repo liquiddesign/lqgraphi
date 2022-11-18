@@ -479,7 +479,7 @@ class TypeRegister extends Type
 	 * @param class-string $entityClass
 	 * @throws \Exception
 	 */
-	public function setEntityClass(string $name, string $entityClass): void
+	public function setClass(string $name, string $entityClass): void
 	{
 		if (isset($this->entityClassTypesMap[$entityClass])) {
 			throw new \Exception("Type '$entityClass' is already registered!");
