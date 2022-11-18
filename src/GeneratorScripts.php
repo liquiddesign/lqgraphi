@@ -5,6 +5,7 @@ namespace LqGrAphi;
 use LqGrAphi\Resolvers\CrudResolver;
 use LqGrAphi\Schema\BaseInput;
 use LqGrAphi\Schema\BaseOutput;
+use LqGrAphi\Schema\ClassOutput;
 use LqGrAphi\Schema\CrudMutation;
 use LqGrAphi\Schema\CrudQuery;
 use LqGrAphi\Schema\TypeRegister;
@@ -24,7 +25,7 @@ class GeneratorScripts
 		}
 
 		foreach ($outputs as $output => $classString) {
-			$output = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($output));
+			$output = Nette\Utils\Strings::firstUpper($output);
 
 			$localTargetPath = "$targetPath{$output}Output.php";
 
@@ -36,11 +37,12 @@ class GeneratorScripts
 			$file->addComment('This file is auto-generated.');
 			$file->setStrictTypes();
 
-			$targetNamespace = $file->addNamespace($targetNamespace);
+			$localNamespace = $file->addNamespace($targetNamespace);
 
-			$class = $targetNamespace->addClass("{$output}Output");
+			$class = $localNamespace->addClass("{$output}Output");
 
 			$class->setExtends(BaseOutput::class);
+			$class->setImplements([ClassOutput::class]);
 
 			$constructor = $class->addMethod('__construct');
 
@@ -54,6 +56,12 @@ class GeneratorScripts
 			$constructor->addBody('parent::__construct([');
 			$constructor->addBody('	\'fields\' => $typeRegister->createOutputFieldsFromClass(' . $classString . '::class),');
 			$constructor->addBody(']);');
+
+			$class->addMethod('getClass')
+				->setStatic()
+				->setReturnType('string')
+				->addComment('@return class-string<\StORM\Entity>')
+				->addBody("return $classString::class;");
 
 			$printer = new Nette\PhpGenerator\Printer();
 
@@ -73,7 +81,7 @@ class GeneratorScripts
 		}
 
 		foreach ($inputs as $input => $classString) {
-			$input = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($input));
+			$input = Nette\Utils\Strings::firstUpper($input);
 
 			$localTargetPath = "$targetPath{$input}CreateInput.php";
 
@@ -85,9 +93,9 @@ class GeneratorScripts
 			$file->addComment('This file is auto-generated.');
 			$file->setStrictTypes();
 
-			$targetNamespace = $file->addNamespace($targetNamespace);
+			$localNamespace = $file->addNamespace($targetNamespace);
 
-			$class = $targetNamespace->addClass("{$input}CreateInput");
+			$class = $localNamespace->addClass("{$input}CreateInput");
 
 			$class->setExtends(BaseInput::class);
 
@@ -122,7 +130,7 @@ class GeneratorScripts
 		}
 
 		foreach ($inputs as $input => $classString) {
-			$input = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($input));
+			$input = Nette\Utils\Strings::firstUpper($input);
 
 			$localTargetPath = "$targetPath{$input}UpdateInput.php";
 
@@ -134,9 +142,9 @@ class GeneratorScripts
 			$file->addComment('This file is auto-generated.');
 			$file->setStrictTypes();
 
-			$targetNamespace = $file->addNamespace($targetNamespace);
+			$localNamespace = $file->addNamespace($targetNamespace);
 
-			$class = $targetNamespace->addClass("{$input}UpdateInput");
+			$class = $localNamespace->addClass("{$input}UpdateInput");
 
 			$class->setExtends(BaseInput::class);
 
@@ -171,7 +179,7 @@ class GeneratorScripts
 		}
 
 		foreach ($queries as $query => $classString) {
-			$query = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($query));
+			$query = Nette\Utils\Strings::firstUpper($query);
 
 			$localTargetPath = "$targetPath{$query}Query.php";
 
@@ -183,9 +191,9 @@ class GeneratorScripts
 			$file->addComment('This file is auto-generated.');
 			$file->setStrictTypes();
 
-			$targetNamespace = $file->addNamespace($targetNamespace);
+			$localNamespace = $file->addNamespace($targetNamespace);
 
-			$class = $targetNamespace->addClass("{$query}Query");
+			$class = $localNamespace->addClass("{$query}Query");
 
 			$class->setExtends(CrudQuery::class);
 
@@ -215,7 +223,7 @@ class GeneratorScripts
 		}
 
 		foreach ($mutations as $mutation => $classString) {
-			$mutation = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($mutation));
+			$mutation = Nette\Utils\Strings::firstUpper($mutation);
 
 			$localTargetPath = "$targetPath{$mutation}Mutation.php";
 
@@ -227,9 +235,9 @@ class GeneratorScripts
 			$file->addComment('This file is auto-generated.');
 			$file->setStrictTypes();
 
-			$targetNamespace = $file->addNamespace($targetNamespace);
+			$localNamespace = $file->addNamespace($targetNamespace);
 
-			$class = $targetNamespace->addClass("{$mutation}Mutation");
+			$class = $localNamespace->addClass("{$mutation}Mutation");
 
 			$class->setExtends(CrudMutation::class);
 
@@ -259,7 +267,7 @@ class GeneratorScripts
 		}
 
 		foreach ($resolvers as $resolver => $classString) {
-			$resolver = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($resolver));
+			$resolver = Nette\Utils\Strings::firstUpper($resolver);
 
 			$localTargetPath = "$targetPath{$resolver}Resolver.php";
 
@@ -271,9 +279,9 @@ class GeneratorScripts
 			$file->addComment('This file is auto-generated.');
 			$file->setStrictTypes();
 
-			$targetNamespace = $file->addNamespace($targetNamespace);
+			$localNamespace = $file->addNamespace($targetNamespace);
 
-			$class = $targetNamespace->addClass("{$resolver}Resolver");
+			$class = $localNamespace->addClass("{$resolver}Resolver");
 
 			$class->setExtends(CrudResolver::class);
 
@@ -303,7 +311,7 @@ class GeneratorScripts
 		}
 
 		foreach ($resolvers as $resolver => $classString) {
-			$resolver = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($resolver));
+			$resolver = Nette\Utils\Strings::firstUpper($resolver);
 
 			$localTargetPath = "$targetPath{$resolver}Resolver.php";
 
@@ -315,9 +323,9 @@ class GeneratorScripts
 			$file->addComment('This file is auto-generated.');
 			$file->setStrictTypes();
 
-			$targetNamespace = $file->addNamespace($targetNamespace);
+			$localNamespace = $file->addNamespace($targetNamespace);
 
-			$class = $targetNamespace->addClass("{$resolver}Resolver");
+			$class = $localNamespace->addClass("{$resolver}Resolver");
 
 			if (!Nette\Utils\Strings::endsWith($classString, 'Resolver')) {
 				$classString .= 'Resolver';
@@ -343,7 +351,7 @@ class GeneratorScripts
 		}
 
 		foreach ($types as $type => $classString) {
-			$type = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($type));
+			$type = Nette\Utils\Strings::firstUpper($type);
 
 			$localTargetPath = "$targetPath{$type}Query.php";
 
@@ -355,9 +363,9 @@ class GeneratorScripts
 			$file->addComment('This file is auto-generated.');
 			$file->setStrictTypes();
 
-			$targetNamespace = $file->addNamespace($targetNamespace);
+			$localNamespace = $file->addNamespace($targetNamespace);
 
-			$class = $targetNamespace->addClass("{$type}Query");
+			$class = $localNamespace->addClass("{$type}Query");
 
 			if (!Nette\Utils\Strings::endsWith($classString, 'Query')) {
 				$classString .= 'Query';
@@ -383,7 +391,7 @@ class GeneratorScripts
 		}
 
 		foreach ($types as $type => $classString) {
-			$type = Nette\Utils\Strings::firstUpper(Nette\Utils\Strings::lower($type));
+			$type = Nette\Utils\Strings::firstUpper($type);
 
 			$localTargetPath = "$targetPath{$type}Mutation.php";
 
@@ -395,9 +403,9 @@ class GeneratorScripts
 			$file->addComment('This file is auto-generated.');
 			$file->setStrictTypes();
 
-			$targetNamespace = $file->addNamespace($targetNamespace);
+			$localNamespace = $file->addNamespace($targetNamespace);
 
-			$class = $targetNamespace->addClass("{$type}Mutation");
+			$class = $localNamespace->addClass("{$type}Mutation");
 
 			if (!Nette\Utils\Strings::endsWith($classString, 'Mutation')) {
 				$classString .= 'Mutation';

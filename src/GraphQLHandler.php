@@ -17,7 +17,6 @@ use GraphQL\Utils\AST;
 use GraphQL\Utils\BuildSchema;
 use GraphQL\Utils\SchemaPrinter;
 use HaydenPierce\ClassFinder\ClassFinder;
-use LqGrAphi\Resolvers\Exceptions\BadRequestException;
 use LqGrAphi\Schema\BaseMutation;
 use LqGrAphi\Schema\BaseQuery;
 use Nette\Caching\Cache;
@@ -90,7 +89,7 @@ class GraphQLHandler
 						$matchedFieldName = \preg_split('~^[^A-Z]+\K|[A-Z][^A-Z]+\K~', $fieldName, 0, \PREG_SPLIT_NO_EMPTY);
 
 						if (!$matchedFieldName || \count($matchedFieldName) < 2) {
-							throw new BadRequestException("Query '$fieldName' not matched!");
+							return [null, null];
 						}
 
 						$resolversNamespace = $this->getResolversNamespace();
@@ -118,7 +117,7 @@ class GraphQLHandler
 							return [$resolverName, Strings::firstLower(\implode('', $matchedFieldName))];
 						}
 
-						return [null];
+						return [null, null];
 					});
 
 					$resolver = null;
