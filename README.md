@@ -15,13 +15,11 @@ This package works great with extended packages with types for LQD packages:
 
 - https://github.com/liquiddesign/eshop-api
 
-## Getting started
-
-### Installation
+## Installation
 
 `composer require liquiddesign/lqgraphi`
 
-### Configuration
+## Configuration
 
 ```neon
 extensions:
@@ -41,7 +39,7 @@ typeRegister:
             product: [EshopApi\Schema\Outputs\ProductOutput, EshopApi\Schema\Inputs\ProductCreateInput, EshopApi\Schema\Inputs\ProductUpdateInput]
 ```
 
-### Entry point
+## Entry point
 
 In you entry point (probably `index.php`) you need to call handler. You just need to create container and pass it to `\LqGrAphi\Handlers\IndexHandler::handle`.
 
@@ -64,7 +62,7 @@ require __DIR__ . '/vendor/autoload.php';
 \LqGrAphi\Handlers\IndexHandler::handle(\EshopApi\Bootstrap::boot()->createContainer(), false);
 ```
 
-### Queries and Mutations
+## Queries and Mutations
 
 Location of queries and mutations is set via config `queryAndMutationsNamespace`.
 Query needs to extend `\LqGrAphi\Schema\BaseQuery` and mutation `\LqGrAphi\Schema\BaseMutation`.<br><br>
@@ -72,7 +70,7 @@ These types are automatically loaded only first time when schema is created and 
 All other requests uses cached schema, due to that script don't need to create schema for every request and performance is not decreased.
 This approach has some limitations: Queries and mutations are not registered in container, so you cant use DI. All these classes will receive container as first argument.
 
-### Types
+## Types
 
 Location of types is set via config `types`. You need to specify all used inputs and outputs here.
 
@@ -87,12 +85,19 @@ typeRegister:
 
 For more info visit documentation of [webonyx/graphql-php](https://webonyx.github.io/graphql-php/) library.
 
-### Resolvers
+### ClassOutput
+
+There is interface `\LqGrAphi\Schema\ClassOutput` with method `getClass`.
+If you use it, TypeRegister will save this mapping ang when you call `getOutputType` you can simply pass class-string instead of name from config.
+
+## Resolvers
 
 Due to caching of whole schema creation, resolvers are isolated from schema and have to resolve request on their own.<br>
 There is simple routing mechanism. GraphQL's queries and mutations names uses lower-camelCase.<br>
 Name is parsed as first word in resolver class name and rest is function name.<br>
 Example: `productGetMany` is parsed as `ProductResolver` and function `getMany`.
+
+Router that parses name to resolver and function uses on-demand cache.
 
 Signature of every resolver function must be:
 ```php
