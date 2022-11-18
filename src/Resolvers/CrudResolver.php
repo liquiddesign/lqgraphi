@@ -68,12 +68,12 @@ abstract class CrudResolver extends BaseResolver
 	 * @param array<mixed> $args
 	 * @param \LqGrAphi\GraphQLContext $context
 	 * @param \GraphQL\Type\Definition\ResolveInfo $resolveInfo
-	 * @return array<mixed>|null
+	 * @return array<mixed>
 	 * @throws \LqGrAphi\Resolvers\Exceptions\BadRequestException
 	 * @throws \ReflectionException
 	 * @throws \StORM\Exception\GeneralException
 	 */
-	public function many(array $rootValue, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): ?array
+	public function many(array $rootValue, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): array
 	{
 		if ($this->onBeforeGetAll) {
 			[$rootValue, $args] = \call_user_func($this->onBeforeGetAll, $rootValue, $args);
@@ -87,12 +87,26 @@ abstract class CrudResolver extends BaseResolver
 	 * @param array<mixed> $args
 	 * @param \LqGrAphi\GraphQLContext $context
 	 * @param \GraphQL\Type\Definition\ResolveInfo $resolveInfo
-	 * @return array<mixed>|null
 	 * @throws \LqGrAphi\Resolvers\Exceptions\BadRequestException
 	 * @throws \ReflectionException
 	 * @throws \StORM\Exception\GeneralException
 	 */
-	public function collection(array $rootValue, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): ?array
+	public function manyTotalCount(array $rootValue, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): int
+	{
+		return \count($this->many($rootValue, $args, $context, $resolveInfo));
+	}
+
+	/**
+	 * @param array<mixed> $rootValue
+	 * @param array<mixed> $args
+	 * @param \LqGrAphi\GraphQLContext $context
+	 * @param \GraphQL\Type\Definition\ResolveInfo $resolveInfo
+	 * @return array<mixed>
+	 * @throws \LqGrAphi\Resolvers\Exceptions\BadRequestException
+	 * @throws \ReflectionException
+	 * @throws \StORM\Exception\GeneralException
+	 */
+	public function collection(array $rootValue, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): array
 	{
 		if ($this->onBeforeGetAll) {
 			[$rootValue, $args] = \call_user_func($this->onBeforeGetAll, $rootValue, $args);
@@ -103,6 +117,20 @@ abstract class CrudResolver extends BaseResolver
 		\assert($repository instanceof IGeneralRepository);
 
 		return $this->fetchResult($repository->getCollection(), $resolveInfo, $args['manyInput'] ?? null);
+	}
+
+	/**
+	 * @param array<mixed> $rootValue
+	 * @param array<mixed> $args
+	 * @param \LqGrAphi\GraphQLContext $context
+	 * @param \GraphQL\Type\Definition\ResolveInfo $resolveInfo
+	 * @throws \LqGrAphi\Resolvers\Exceptions\BadRequestException
+	 * @throws \ReflectionException
+	 * @throws \StORM\Exception\GeneralException
+	 */
+	public function collectionTotalCount(array $rootValue, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): int
+	{
+		return \count($this->collection($rootValue, $args, $context, $resolveInfo));
 	}
 
 	/**
@@ -124,7 +152,7 @@ abstract class CrudResolver extends BaseResolver
 		$input = $this->processMutationsFromInput($input, $context, $repository);
 
 		try {
-			$object = $repository->syncOne($input, ignore: false);
+			$object = $repository->createOne($input);
 
 			foreach ($addRelations as $relationName => $values) {
 				$object->{$relationName}->relate($values);
@@ -200,9 +228,11 @@ abstract class CrudResolver extends BaseResolver
 
 	public function getName(): string
 	{
-		$reflection = new \ReflectionClass($this->getClass());
+		$reflection = new \ReflectionClass($this);
 
-		return Strings::lower($reflection->getShortName());
+		$className = $reflection->getShortName();
+
+		return Strings::firstLower((string) (Strings::endsWith($className, 'Resolver') ? Strings::before($className, 'Resolver') : $className));
 	}
 
 	/**
@@ -307,7 +337,7 @@ abstract class CrudResolver extends BaseResolver
 			throw new BadRequestException('Invalid filters');
 		}
 
-		$collection->orderBy([$manyInput['sort'] ?? BaseType::DEFAULT_SORT => $manyInput['order'] ?? BaseType::DEFAULT_ORDER])
+		$collection->setOrderBy([$manyInput['sort'] ?? BaseType::DEFAULT_SORT => $manyInput['order'] ?? BaseType::DEFAULT_ORDER])
 			->setPage($manyInput['page'] ?? BaseType::DEFAULT_PAGE, $manyInput['limit'] ?? BaseType::DEFAULT_LIMIT);
 
 		$result = [];

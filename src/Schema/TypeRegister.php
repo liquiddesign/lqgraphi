@@ -32,6 +32,11 @@ class TypeRegister extends Type
 	 */
 	public array $typesMap = [];
 
+	/**
+	 * @var array<class-string, string>
+	 */
+	public array $entityClassTypesMap = [];
+
 	public function __construct(private readonly SchemaManager $schemaManager)
 	{
 	}
@@ -146,9 +151,10 @@ class TypeRegister extends Type
 						$array = true;
 					}
 
+					$typeClass = $typeName;
 					$typeName = Strings::lower(Strings::substring($typeName, \strrpos($typeName, '\\') + 1));
 
-					$type = $this->getOutputType($typeName);
+					$type = $this->getOutputType($typeName, $typeClass);
 				}
 
 				$isForceRequired = Arrays::contains($forceRequired, $name);
@@ -408,8 +414,16 @@ class TypeRegister extends Type
 		return $type;
 	}
 
-	public function getOutputType(string $name): Type
+	public function getOutputType(string $name, ?string $class = null): Type
 	{
+		if (isset($this->entityClassTypesMap[$name])) {
+			$name = $this->entityClassTypesMap[$name];
+		}
+
+		if ($class && isset($this->entityClassTypesMap[$class])) {
+			$name = $this->entityClassTypesMap[$class];
+		}
+
 		if (!Strings::endsWith($name, 'Output')) {
 			$name .= 'Output';
 		}
@@ -427,9 +441,9 @@ class TypeRegister extends Type
 		return $type;
 	}
 
-	public function getManyOutputType(string $name): Type
+	public function getManyOutputType(string $name, ?string $class = null): Type
 	{
-		$type = $this->getOutputType($name);
+		$type = $this->getOutputType($name, $class);
 
 		if ($type instanceof MixedScalar) {
 			return $this::mixed();
@@ -458,6 +472,20 @@ class TypeRegister extends Type
 		}
 
 		$this->typesMap[$name] = $class;
+	}
+
+	/**
+	 * @param string $name
+	 * @param class-string $entityClass
+	 * @throws \Exception
+	 */
+	public function setEntityClass(string $name, string $entityClass): void
+	{
+		if (isset($this->entityClassTypesMap[$entityClass])) {
+			throw new \Exception("Type '$entityClass' is already registered!");
+		}
+
+		$this->entityClassTypesMap[$entityClass] = $name;
 	}
 
 	public function getManyInput(): InputObjectType

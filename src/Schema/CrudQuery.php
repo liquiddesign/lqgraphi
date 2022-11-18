@@ -51,12 +51,24 @@ abstract class CrudQuery extends BaseQuery
 						'manyInput' => $this->typeRegister->getManyInputWithDefaultValue(),
 					],
 				],
+				"{$baseName}ManyTotalCount" => [
+					'type' => $this->typeRegister::nonNull($this->typeRegister::int()),
+					'args' => [
+						'manyInput' => $this->typeRegister->getManyInputWithDefaultValue(),
+					],
+				],
 			],
 		];
 
 		if ($this->getRepository() instanceof IGeneralRepository) {
 			$localConfig['fields']["{$baseName}Collection"] = [
 				'type' => $this->typeRegister->getManyOutputType($this->getName()),
+				'args' => [
+					'manyInput' => $this->typeRegister->getManyInputWithDefaultValue(),
+				],
+			];
+			$localConfig['fields']["{$baseName}CollectionTotalCount"] = [
+				'type' => $this->typeRegister::nonNull($this->typeRegister::int()),
 				'args' => [
 					'manyInput' => $this->typeRegister->getManyInputWithDefaultValue(),
 				],
@@ -79,14 +91,16 @@ abstract class CrudQuery extends BaseQuery
 
 	public function getOutputType(): Type
 	{
-		return $this->typeRegister->getOutputType($this->getName());
+		return $this->typeRegister->getOutputType($this->getName(), $this->getClass());
 	}
 
 	public function getName(): string
 	{
-		$reflection = new \ReflectionClass($this->getClass());
+		$reflection = new \ReflectionClass($this);
 
-		return Strings::lower($reflection->getShortName());
+		$className = $reflection->getShortName();
+
+		return Strings::firstLower((string) (Strings::endsWith($className, 'Query') ? Strings::before($className, 'Query') : $className));
 	}
 
 	/**

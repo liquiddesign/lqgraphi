@@ -20,8 +20,11 @@ use HaydenPierce\ClassFinder\ClassFinder;
 use LqGrAphi\Resolvers\Exceptions\BadRequestException;
 use LqGrAphi\Schema\BaseMutation;
 use LqGrAphi\Schema\BaseQuery;
+use Nette\Caching\Cache;
+use Nette\Caching\Storage;
 use Nette\DI\Container;
 use Nette\Http\Request;
+use Nette\Utils\Arrays;
 use Nette\Utils\FileSystem;
 use Nette\Utils\Strings;
 use StORM\Connection;
@@ -41,11 +44,15 @@ class GraphQLHandler
 	 */
 	private string $resolversNamespace;
 
+	private readonly Cache $cache;
+
 	public function __construct(
 		private readonly Container $container,
 		private readonly Request $httpRequest,
 		private readonly DIConnection $connection,
+		Storage $storage
 	) {
+		$this->cache = new Cache($storage);
 	}
 
 	/**
@@ -66,27 +73,60 @@ class GraphQLHandler
 				'fieldResolver' => function ($objectValue, array $args, GraphQLContext $context, ResolveInfo $info) {
 					$fieldName = $info->fieldName;
 
+					/** @var array<string> $allAvailableResolvers */
+					$allAvailableResolvers = $this->cache->load('allResolvers', function (): array {
+						return ClassFinder::getClassesInNamespace($this->getResolversNamespace(), ClassFinder::RECURSIVE_MODE);
+					});
+
 					if (isset($objectValue[$fieldName]) || (\is_array($objectValue) && \array_key_exists($fieldName, $objectValue))) {
 						return $objectValue[$fieldName];
 					}
 
-					$matchedFieldName = \preg_split('~^[^A-Z]+\K|[A-Z][^A-Z]+\K~', $fieldName, 0, \PREG_SPLIT_NO_EMPTY);
+					/**
+					 * @var class-string|null $resolverName
+					 * @var string $actionName
+					 */
+					[$resolverName, $actionName] = $this->cache->load($fieldName, function () use ($fieldName, $allAvailableResolvers): array {
+						$matchedFieldName = \preg_split('~^[^A-Z]+\K|[A-Z][^A-Z]+\K~', $fieldName, 0, \PREG_SPLIT_NO_EMPTY);
 
-					if (!$matchedFieldName) {
-						throw new BadRequestException("Query '$fieldName' not matched!");
+						if (!$matchedFieldName || \count($matchedFieldName) < 2) {
+							throw new BadRequestException("Query '$fieldName' not matched!");
+						}
+
+						$resolversNamespace = $this->getResolversNamespace();
+
+						if (!Strings::endsWith($resolversNamespace, '\\')) {
+							$resolversNamespace .= '\\';
+						}
+
+						$incrementalResolverName = '';
+
+						$matchedFieldNameCount = \count($matchedFieldName);
+
+						for ($i = 0; $i < $matchedFieldNameCount - 1; $i++) {
+							$incrementalResolverName .= $matchedFieldName[$i];
+
+							/** @var class-string $resolverName */
+							$resolverName = $resolversNamespace . Strings::firstUpper($incrementalResolverName) . 'Resolver';
+
+							unset($matchedFieldName[$i]);
+
+							if (!Arrays::contains($allAvailableResolvers, $resolverName)) {
+								continue;
+							}
+
+							return [$resolverName, Strings::firstLower(\implode('', $matchedFieldName))];
+						}
+
+						return [null];
+					});
+
+					$resolver = null;
+
+					if ($resolverName) {
+						/** @var \LqGrAphi\Resolvers\BaseResolver|null $resolver */
+						$resolver = $this->container->getByType($resolverName, false);
 					}
-
-					$resolversNamespace = $this->getResolversNamespace();
-
-					if (!Strings::endsWith($resolversNamespace, '\\')) {
-						$resolversNamespace .= '\\';
-					}
-
-					/** @var class-string $resolverName */
-					$resolverName = $resolversNamespace . Strings::firstUpper(Strings::lower($matchedFieldName[0])) . 'Resolver';
-
-					/** @var \LqGrAphi\Resolvers\BaseResolver|null $resolver */
-					$resolver = $this->container->getByType($resolverName, false);
 
 					if (!$resolver) {
 						$property = null;
@@ -105,14 +145,6 @@ class GraphQLHandler
 							? $property($objectValue, $args, $context, $info)
 							: $property;
 					}
-
-					unset($matchedFieldName[0]);
-
-					if (\count($matchedFieldName) === 0) {
-						return null;
-					}
-
-					$actionName = Strings::firstLower(\implode('', $matchedFieldName));
 
 					return $resolver->{$actionName}([], $args, $context, $info);
 				},

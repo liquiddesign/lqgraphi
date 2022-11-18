@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace LqGrAphi;
 
+use LqGrAphi\Schema\EntityOutput;
 use LqGrAphi\Schema\TypeRegister;
 use Nette\DI\CompilerExtension;
 use Nette\Schema\Expect;
@@ -56,6 +57,12 @@ class LqGrAphiDI extends CompilerExtension
 			}
 
 			$typeRegister->addSetup('set', ["{$name}Output", $types[0]]);
+
+			$implements = \class_implements($types[0]);
+
+			if (isset($implements[EntityOutput::class])) {
+				$typeRegister->addSetup('setEntityClass', ["{$name}Output", $types[0]::getClass()]);
+			}
 
 			if (!isset($types[1])) {
 				continue;

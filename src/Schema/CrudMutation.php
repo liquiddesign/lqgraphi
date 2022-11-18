@@ -60,7 +60,7 @@ abstract class CrudMutation extends BaseMutation
 
 	public function getOutputType(): \GraphQL\Type\Definition\Type
 	{
-		return $this->typeRegister->getOutputType($this->getName());
+		return $this->typeRegister->getOutputType($this->getName(), $this->getClass());
 	}
 
 	public function getCreateInputType(): InputType
@@ -75,8 +75,10 @@ abstract class CrudMutation extends BaseMutation
 
 	public function getName(): string
 	{
-		$reflection = new \ReflectionClass($this->getClass());
+		$reflection = new \ReflectionClass($this);
 
-		return Strings::lower($reflection->getShortName());
+		$className = $reflection->getShortName();
+
+		return Strings::firstLower((string) (Strings::endsWith($className, 'Mutation') ? Strings::before($className, 'Mutation') : $className));
 	}
 }
