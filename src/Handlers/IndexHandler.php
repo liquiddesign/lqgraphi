@@ -28,6 +28,7 @@ abstract class IndexHandler
 			$response->setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
 			$response->setHeader('Access-Control-Max-Age', '86400');
 			$response->setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Requested-With');
+			$response->setHeader('Access-Control-Allow-Credentials', 'true');
 			$response->setContentType('application/json');
 		}
 
