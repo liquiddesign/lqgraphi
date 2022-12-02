@@ -6,6 +6,7 @@ use Common\DB\IGeneralRepository;
 use GraphQL\Type\Definition\ResolveInfo;
 use LqGrAphi\GraphQLContext;
 use LqGrAphi\Resolvers\Exceptions\BadRequestException;
+use LqGrAphi\Resolvers\Exceptions\NotFoundException;
 use LqGrAphi\Schema\BaseType;
 use Nette\Utils\Arrays;
 use Nette\Utils\Strings;
@@ -184,11 +185,13 @@ abstract class CrudResolver extends BaseResolver
 		$input = $this->processMutationsFromInput($input, $context, $repository);
 
 		try {
-			$object = $repository->one($input[BaseType::ID_NAME], true);
+			$object = $repository->one($input[BaseType::ID_NAME]);
 
-			if ($input) {
-				$object->update($input);
+			if (!$object) {
+				throw new NotFoundException($input[BaseType::ID_NAME]);
 			}
+
+			$object->update($input);
 
 			foreach ($addRelations as $relationName => $values) {
 				if (!$values) {
