@@ -6,6 +6,7 @@ use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\InputType;
 use GraphQL\Type\Definition\NullableType;
 use GraphQL\Type\Definition\Type;
+use JetBrains\PhpStorm\Deprecated;
 use MLL\GraphQLScalars\Date;
 use MLL\GraphQLScalars\DateTime;
 use MLL\GraphQLScalars\JSON;
@@ -119,7 +120,17 @@ class TypeRegister extends Type
 
 			$typeName = $reflectionType->getName();
 
-			$fields[$name] = function () use ($typeName, $property, $forceOptional, $forceRequired, $name, $forceAllOptional, $reflectionType, $class, $stormStructure) {
+			$fields[$name] = function () use (
+				$typeName,
+				$property,
+				$forceOptional,
+				$forceRequired,
+				$name,
+				$forceAllOptional,
+				$reflectionType,
+				$class,
+				$stormStructure,
+			) {
 				$array = false;
 				$type = match ($typeName) {
 					'int' => static::int(),
@@ -203,6 +214,7 @@ class TypeRegister extends Type
 		bool $forceAllOptional = false,
 		bool $includeId = true,
 		bool $setDefaultValues = false,
+		#[Deprecated]
 		InputRelationFieldsEnum $inputRelationFieldsEnum = InputRelationFieldsEnum::ALL,
 	): array {
 		$reflection = new \ReflectionClass($class);
@@ -294,16 +306,18 @@ class TypeRegister extends Type
 
 			if (isset($relation)) {
 				if ($relation instanceof RelationNxN) {
-					if ($inputRelationFieldsEnum === InputRelationFieldsEnum::ALL || $inputRelationFieldsEnum === InputRelationFieldsEnum::ONLY_ADD) {
-						$fields['add' . Strings::firstUpper($name)] = $type;
-					}
+					$relationFields = [];
 
-					if ($inputRelationFieldsEnum === InputRelationFieldsEnum::ALL || $inputRelationFieldsEnum === InputRelationFieldsEnum::ONLY_REMOVE) {
-						$fields['remove' . Strings::firstUpper($name)] = $type;
-						$fields['overwrite' . Strings::firstUpper($name)] = $type;
-					}
+					$relationFields['add'] = $this::listOf($this::nonNull($this::id()));
+					$relationFields['remove'] = $this::listOf($this::nonNull($this::id()));
+					$relationFields['replace'] = $this::listOf($this::nonNull($this::id()));
+
+					$fields[$name . 'IDs'] = $this->types[Strings::firstUpper($name) . 'IDs'] ??= new InputObjectType([
+						'name' => Strings::firstUpper($name) . 'IDs',
+						'fields' => $relationFields,
+					]);
 				} elseif ($relation instanceof Relation) {
-					$fields[$name] = $type;
+					$fields[$name . 'ID'] = $this::id();
 				}
 			} else {
 				$fields[$name] = ['type' => $type,];
@@ -343,6 +357,7 @@ class TypeRegister extends Type
 		bool $forceAllOptional = false,
 		bool $includeId = false,
 		bool $setDefaultValues = true,
+		#[Deprecated]
 		InputRelationFieldsEnum $inputRelationFieldsEnum = InputRelationFieldsEnum::ONLY_ADD,
 	): array {
 		return $this->createInputFieldsFromClass(
@@ -380,6 +395,7 @@ class TypeRegister extends Type
 		bool $forceAllOptional = true,
 		bool $includeId = true,
 		bool $setDefaultValues = false,
+		#[Deprecated]
 		InputRelationFieldsEnum $inputRelationFieldsEnum = InputRelationFieldsEnum::ALL,
 	): array {
 		return $this->createInputFieldsFromClass(

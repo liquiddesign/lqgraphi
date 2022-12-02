@@ -180,18 +180,36 @@ abstract class CrudResolver extends BaseResolver
 
 		$repository = $this->getRepository();
 
-		[$input, $addRelations, $removeRelations] = $this->extractRelationsFromInput($args['input']);
+		[$input, $addRelations, $removeRelations, $replaceRelations] = $this->extractRelationsFromInput($args['input']);
 		$input = $this->processMutationsFromInput($input, $context, $repository);
 
 		try {
-			$object = $repository->syncOne($input, ignore: false);
+			$object = $repository->one($input[BaseType::ID_NAME], true);
+
+			if ($input) {
+				$object->update($input);
+			}
 
 			foreach ($addRelations as $relationName => $values) {
+				if (!$values) {
+					continue;
+				}
+
 				$object->{$relationName}->relate($values);
 			}
 
 			foreach ($removeRelations as $relationName => $values) {
 				$object->{$relationName}->unrelate($values);
+			}
+
+			foreach ($replaceRelations as $relationName => $values) {
+				$object->{$relationName}->unrelateAll();
+
+				if (!$values) {
+					continue;
+				}
+
+				$object->{$relationName}->relate($values);
 			}
 		} catch (\Throwable $e) {
 			if (!$context->isDebugMode()) {
@@ -247,11 +265,7 @@ abstract class CrudResolver extends BaseResolver
 		foreach ($input as $key => $value) {
 			$column = $structure->getColumn($key);
 
-			if (!$column) {
-				throw new \Exception("Processing column '$key' failed on finding column in structure!");
-			}
-
-			if (!$column->hasMutations()) {
+			if (!$column?->hasMutations()) {
 				continue;
 			}
 
@@ -269,42 +283,42 @@ abstract class CrudResolver extends BaseResolver
 	{
 		$addRelations = [];
 		$removeRelations = [];
+		$replaceRelations = [];
 
 		foreach ($input as $inputKey => $inputField) {
-			if (Strings::startsWith($inputKey, 'add')) {
-				if ($inputField !== null) {
-					$name = Strings::lower(\substr($inputKey, 3));
-
-					$addRelations[$name] = $inputField;
-				}
-
+			if (Strings::endsWith($inputKey, 'ID')) {
+				$input[Strings::before($inputKey, 'ID')] = $inputField;
 				unset($input[$inputKey]);
-			}
 
-			if (Strings::startsWith($inputKey, 'remove')) {
-				if ($inputField !== null) {
-					$name = Strings::lower(\substr($inputKey, 6));
-
-					$removeRelations[$name] = $inputField;
-				}
-
-				unset($input[$inputKey]);
-			}
-
-			if (!Strings::startsWith($inputKey, 'overwrite')) {
 				continue;
 			}
 
-			if ($inputField !== null) {
-				$name = Strings::lower(\substr($inputKey, 9));
+			if (!Strings::endsWith($inputKey, 'IDs')) {
+				continue;
+			}
 
-				$input[$name] = $inputField;
+			$name = Strings::before($inputKey, 'IDs');
+
+			foreach ($inputField as $relationKey => $relationField) {
+				if ($relationKey === 'add' && $relationField !== null) {
+					$addRelations[$name] = $relationField;
+				}
+
+				if ($relationKey === 'remove' && $relationField !== null) {
+					$removeRelations[$name] = $relationField;
+				}
+
+				if ($relationKey !== 'replace' || $relationField === null) {
+					continue;
+				}
+
+				$replaceRelations[$name] = $relationField;
 			}
 
 			unset($input[$inputKey]);
 		}
 
-		return [$input, $addRelations, $removeRelations];
+		return [$input, $addRelations, $removeRelations, $replaceRelations];
 	}
 
 	/**
