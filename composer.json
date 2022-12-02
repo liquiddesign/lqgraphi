@@ -27,7 +27,8 @@
         "nette/tester": "^2.4",
         "phpstan/phpstan-nette": "^1.0",
         "squizlabs/php_codesniffer": "~3.7",
-        "slevomat/coding-standard": "~8.2"
+        "slevomat/coding-standard": "~8.2",
+        "jetbrains/phpstorm-attributes": "^1.0"
     },
     "scripts": {
         "fix-code": ["@phpcsfix"],
