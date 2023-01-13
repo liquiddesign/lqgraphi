@@ -149,6 +149,8 @@ class GraphQLHandler
 				},
 			]);
 
+			$this->connection->getLink()->beginTransaction();
+
 			/** @var \GraphQL\Executor\ExecutionResult $result */
 			$result = $server->executePsrRequest($psrRequest);
 
@@ -171,8 +173,14 @@ class GraphQLHandler
 				}
 			}
 
-			return $result->toArray($debugFlag);
+			$result = $result->toArray($debugFlag);
+
+			$this->connection->getLink()->commit();
+
+			return $result;
 		} catch (\Throwable $e) {
+			$this->connection->getLink()->rollBack();
+
 			if ($this->container->getParameters()['debugMode'] && !$this->container->getParameters()['productionMode']) {
 				throw $e;
 			}

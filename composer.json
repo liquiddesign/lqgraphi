@@ -17,10 +17,8 @@
         "ext-intl": "*",
         "ext-pdo": "*",
         "ext-json": "*",
-        "webonyx/graphql-php": "^14.11.8",
-        "mll-lab/graphql-php-scalars": "^5.4",
+        "webonyx/graphql-php": "^15.0.1",
         "contributte/psr7-http-message": "^0.8.0",
-        "simpod/graphql-utils": "^0.5.4",
         "haydenpierce/class-finder": "^0.4.3"
     },
     "require-dev": {

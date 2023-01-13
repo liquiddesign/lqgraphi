@@ -90,6 +90,33 @@ For more info visit documentation of [webonyx/graphql-php](https://webonyx.githu
 There is interface `\LqGrAphi\Schema\ClassOutput` with method `getClass`.
 If you use it, TypeRegister will save this mapping ang when you call `getOutputType` you can simply pass class-string instead of name from config.
 
+### ClassInput
+
+### Relations
+
+In outputs, relations are object or list of objects with up to 10 levels of depth.
+Inputs, on the other end, have always two fields for relation.
+
+One with suffix `ID` for single relations which takes string (or null if possible).
+For many relations there is field with suffix `IDs` which is object with `add`, `remove` and `replace` fields. These fields takes list of strings.
+
+Second, there is always fields with suffix `OBJ`, which takes directly input object and also updates it. It can also have 10 levels of depth.
+For many relations there is field with suffix `OBJs` which takes list of input objects.
+
+Due to limitations of GraphQL where you can´t have union input type, these inputs are always in UpdateInput variant which has all fields optional.
+Based on ID field, object is created or only updated. This approach loses type safety for required fields when creating object, in this case error will only be caused in runtime. 
+
+```graphql
+input Object {
+    fullName: String
+    accountsIDs: SubObjectIDs
+    accountsOBJs: [SubObjectUpdateInput]
+}
+```
+
+There is interface `\LqGrAphi\Schema\ClassInput` with method `getClass`.
+If you use it, TypeRegister will save this mapping ang when you call `getInputType` you can simply pass class-string instead of name from config. Also, TypeRegister will map this input in input objects to relation fields.
+
 ## Resolvers
 
 Due to caching of whole schema creation, resolvers are isolated from schema and have to resolve request on their own.<br>
@@ -168,8 +195,7 @@ class CustomerCreateInput extends BaseInput
 	public function __construct(TypeRegister $typeRegister)
 	{
 		$config = [
-			'fields' => $typeRegister->createInputFieldsFromClass(Customer::class, includeId: false, inputRelationFieldsEnum: InputRelationFieldsEnum::ONLY_ADD),
-
+			'fields' => $typeRegister->createInputFieldsFromClass(Customer::class, includeId: false),
 		];
 
 		parent::__construct($config);
@@ -222,7 +248,7 @@ To help working with API there is some automatic improvements
 
 #### Filtering
 
-Filters are input fields of type JSON, which are parsed to repository *filter* functions.
+Filters are input fields of type JSON, which are parsed to repository allowed *filter* functions.
 
 #### Fetch result
 

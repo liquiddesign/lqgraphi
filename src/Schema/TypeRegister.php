@@ -29,14 +29,19 @@ class TypeRegister extends Type
 	public array $types = [];
 
 	/**
-	 * @var array<string, class-string>
+	 * @var array<string, class-string|string>
 	 */
 	public array $typesMap = [];
 
 	/**
 	 * @var array<class-string, string>
 	 */
-	public array $entityClassTypesMap = [];
+	public array $entityClassOutputTypesMap = [];
+
+	/**
+	 * @var array<class-string, string>
+	 */
+	public array $entityClassInputTypesMap = [];
 
 	public function __construct(private readonly SchemaManager $schemaManager)
 	{
@@ -246,7 +251,6 @@ class TypeRegister extends Type
 
 			$typeName = $reflectionType->getName();
 
-
 			$array = false;
 			$type = match ($typeName) {
 				'int' => static::int(),
@@ -316,8 +320,17 @@ class TypeRegister extends Type
 						'name' => Strings::firstUpper($name) . 'IDs',
 						'fields' => $relationFields,
 					]);
+
+					$fields[$name . 'OBJs'] = function () use ($relation) {
+						/** @phpstan-ignore-next-line */
+						return $this::listOf($this->getInputType($relation->getTarget()));
+					};
 				} elseif ($relation instanceof Relation) {
 					$fields[$name . 'ID'] = $this::id();
+
+					$fields[$name . 'OBJ'] = function () use ($relation) {
+						return $this->getInputType($relation->getTarget());
+					};
 				}
 			} else {
 				$fields[$name] = ['type' => $type,];
@@ -411,14 +424,60 @@ class TypeRegister extends Type
 		);
 	}
 
-	public function getInputType(string $name): InputType
+	/**
+	 * @param class-string<\StORM\Entity> $class
+	 * @param array<string>|null $include
+	 * @param array<string> $exclude
+	 * @param array<string> $forceRequired
+	 * @param array<string> $forceOptional
+	 * @param bool $forceAllOptional
+	 * @param bool $includeId
+	 * @param bool $setDefaultValues
+	 * @return array<mixed>
+	 * @throws \ReflectionException
+	 */
+	public function createRelationInputFieldsFromClass(
+		string $class,
+		?array $include = null,
+		array $exclude = [],
+		array $forceRequired = [],
+		array $forceOptional = [],
+		bool $forceAllOptional = true,
+		bool $includeId = false,
+		bool $setDefaultValues = false,
+	): array {
+		return $this->createInputFieldsFromClass(
+			$class,
+			$include,
+			$exclude,
+			$forceRequired,
+			$forceOptional,
+			$forceAllOptional,
+			$includeId,
+			$setDefaultValues,
+		);
+	}
+
+	public function getInputType(string $name, ?string $class = null): InputType
 	{
+		if (isset($this->entityClassInputTypesMap[$name])) {
+			$name = $this->entityClassInputTypesMap[$name];
+		}
+
+		if ($class && isset($this->entityClassInputTypesMap[$class])) {
+			$name = $this->entityClassInputTypesMap[$class];
+		}
+
 		if (!Strings::endsWith($name, 'Input')) {
 			$name .= 'Input';
 		}
 
 		if (!isset($this->typesMap[$name])) {
 			return $this::mixed();
+		}
+
+		if (Strings::startsWith($this->typesMap[$name], '_')) {
+			$name = Strings::after($this->typesMap[$name], '_');
 		}
 
 		$type = $this->types[$name] ??= new $this->typesMap[$name]($this);
@@ -432,12 +491,12 @@ class TypeRegister extends Type
 
 	public function getOutputType(string $name, ?string $class = null): Type
 	{
-		if (isset($this->entityClassTypesMap[$name])) {
-			$name = $this->entityClassTypesMap[$name];
+		if (isset($this->entityClassOutputTypesMap[$name])) {
+			$name = $this->entityClassOutputTypesMap[$name];
 		}
 
-		if ($class && isset($this->entityClassTypesMap[$class])) {
-			$name = $this->entityClassTypesMap[$class];
+		if ($class && isset($this->entityClassOutputTypesMap[$class])) {
+			$name = $this->entityClassOutputTypesMap[$class];
 		}
 
 		if (!Strings::endsWith($name, 'Output')) {
@@ -487,6 +546,12 @@ class TypeRegister extends Type
 			throw new \Exception("Type '$name' is already registered!");
 		}
 
+		if ($typeKey = \array_search($class, $this->typesMap)) {
+			$this->typesMap[$name] = "_$typeKey";
+
+			return;
+		}
+
 		$this->typesMap[$name] = $class;
 	}
 
@@ -495,13 +560,27 @@ class TypeRegister extends Type
 	 * @param class-string $entityClass
 	 * @throws \Exception
 	 */
-	public function setClass(string $name, string $entityClass): void
+	public function setOutputClass(string $name, string $entityClass): void
 	{
-		if (isset($this->entityClassTypesMap[$entityClass])) {
+		if (isset($this->entityClassOutputTypesMap[$entityClass])) {
 			throw new \Exception("Type '$entityClass' is already registered!");
 		}
 
-		$this->entityClassTypesMap[$entityClass] = $name;
+		$this->entityClassOutputTypesMap[$entityClass] = $name;
+	}
+
+	/**
+	 * @param string $name
+	 * @param class-string $entityClass
+	 * @throws \Exception
+	 */
+	public function setInputClass(string $name, string $entityClass): void
+	{
+		if (isset($this->entityClassInputTypesMap[$entityClass])) {
+			throw new \Exception("Type '$entityClass' is already registered!");
+		}
+
+		$this->entityClassInputTypesMap[$entityClass] = $name;
 	}
 
 	public function getManyInput(): InputObjectType

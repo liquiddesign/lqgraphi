@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace LqGrAphi;
 
+use LqGrAphi\Schema\ClassInput;
 use LqGrAphi\Schema\ClassOutput;
 use LqGrAphi\Schema\TypeRegister;
 use Nette\DI\CompilerExtension;
@@ -48,6 +49,14 @@ class LqGrAphiDI extends CompilerExtension
 		if (isset($config['types']->input)) {
 			foreach ($config['types']->input as $name => $type) {
 				$typeRegister->addSetup('set', ["{$name}Input", $type]);
+
+				$implements = \class_implements($type);
+
+				if (!isset($implements[ClassInput::class])) {
+					continue;
+				}
+
+				$typeRegister->addSetup('setInputClass', ["{$name}Input", $type::getClass()]);
 			}
 		}
 
@@ -61,7 +70,7 @@ class LqGrAphiDI extends CompilerExtension
 			$implements = \class_implements($types[0]);
 
 			if (isset($implements[ClassOutput::class])) {
-				$typeRegister->addSetup('setClass', ["{$name}Output", $types[0]::getClass()]);
+				$typeRegister->addSetup('setOutputClass', ["{$name}Output", $types[0]::getClass()]);
 			}
 
 			if (!isset($types[1])) {

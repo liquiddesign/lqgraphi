@@ -146,13 +146,21 @@ abstract class CrudResolver extends BaseResolver
 
 		$repository = $this->getRepository();
 
-		[$input, $addRelations] = $this->extractRelationsFromInput($args['input']);
+		[$input, $addRelations, $removeRelations, $replaceRelations] = $this->extractRelationsFromInput($args['input']);
 		$input = $this->processMutationsFromInput($input, $context, $repository);
+
+		unset($removeRelations);
 
 		try {
 			$object = $repository->createOne($input);
 
-			foreach ($addRelations as $relationName => $values) {
+			if (!$replaceRelations) {
+				foreach ($addRelations as $relationName => $values) {
+					$object->{$relationName}->relate($values);
+				}
+			}
+
+			foreach ($replaceRelations as $relationName => $values) {
 				$object->{$relationName}->relate($values);
 			}
 		} catch (\Throwable $e) {
@@ -184,13 +192,13 @@ abstract class CrudResolver extends BaseResolver
 		[$input, $addRelations, $removeRelations, $replaceRelations] = $this->extractRelationsFromInput($args['input']);
 		$input = $this->processMutationsFromInput($input, $context, $repository);
 
+		$object = $repository->one($input[BaseType::ID_NAME]);
+
+		if (!$object) {
+			throw new NotFoundException($input[BaseType::ID_NAME]);
+		}
+
 		try {
-			$object = $repository->one($input[BaseType::ID_NAME]);
-
-			if (!$object) {
-				throw new NotFoundException($input[BaseType::ID_NAME]);
-			}
-
 			$object->update($input);
 
 			foreach ($addRelations as $relationName => $values) {
@@ -288,6 +296,7 @@ abstract class CrudResolver extends BaseResolver
 		$removeRelations = [];
 		$replaceRelations = [];
 
+		// String relations processing
 		foreach ($input as $inputKey => $inputField) {
 			if (Strings::endsWith($inputKey, 'ID')) {
 				$input[Strings::before($inputKey, 'ID')] = $inputField;
@@ -316,6 +325,99 @@ abstract class CrudResolver extends BaseResolver
 				}
 
 				$replaceRelations[$name] = $relationField;
+			}
+
+			unset($input[$inputKey]);
+		}
+
+		$structure = $this->schemaManager->getStructure($this->getClass());
+
+		// Object relations processing
+		foreach ($input as $inputKey => $inputField) {
+			if (Strings::endsWith($inputKey, 'OBJ')) {
+				$relationName = Strings::before($inputKey, 'OBJ');
+
+				if (!$relationName) {
+					continue;
+				}
+
+				$relation = $structure->getRelation($relationName);
+
+				if (!$relation) {
+					throw new \Exception("Relation '$relationName' not found");
+				}
+
+				$repository = $this->connection->findRepository($relation->getTarget());
+
+				if (isset($inputField[BaseType::ID_NAME]) && $object = $repository->one($inputField[BaseType::ID_NAME])) {
+					try {
+						$object->update($inputField);
+					} catch (\Throwable $e) {
+						if ($e->getCode() === '23000') {
+							throw new BadRequestException('Invalid values in relations!');
+						}
+
+						throw new BadRequestException('Invalid values!');
+					}
+				} else {
+					try {
+						$object = $repository->createOne($inputField);
+					} catch (\Throwable $e) {
+						if ($e->getCode() === '23000') {
+							throw new BadRequestException('Invalid values in relations!');
+						}
+
+						throw new BadRequestException('Invalid values!');
+					}
+				}
+
+				$replaceRelations[$relationName] = $object->getPK();
+
+				unset($input[$inputKey]);
+			}
+
+			if (!Strings::endsWith($inputKey, 'OBJs')) {
+				continue;
+			}
+
+			$relationName = Strings::before($inputKey, 'OBJs');
+
+			if (!$relationName) {
+				continue;
+			}
+
+			$relation = $structure->getRelation($relationName);
+
+			if (!$relation) {
+				throw new \Exception("Relation '$relationName' not found");
+			}
+
+			$repository = $this->connection->findRepository($relation->getTarget());
+
+			foreach ($inputField as $oneInputField) {
+				if (isset($oneInputField[BaseType::ID_NAME]) && $object = $repository->one($oneInputField[BaseType::ID_NAME])) {
+					try {
+						$object->update($oneInputField);
+					} catch (\Throwable $e) {
+						if ($e->getCode() === '23000') {
+							throw new BadRequestException('Invalid values in relations!');
+						}
+
+						throw new BadRequestException('Invalid values!');
+					}
+				} else {
+					try {
+						$object = $repository->createOne($oneInputField);
+					} catch (\Throwable $e) {
+						if ($e->getCode() === '23000') {
+							throw new BadRequestException('Invalid values in relations!');
+						}
+
+						throw new BadRequestException('Invalid values!');
+					}
+				}
+
+				$replaceRelations[$relationName] = $object->getPK();
 			}
 
 			unset($input[$inputKey]);

@@ -8,13 +8,18 @@ use LqGrAphi\Schema\BaseType;
 use Nette\DI\Container;
 use Nette\Utils\Arrays;
 use StORM\Collection;
+use StORM\DIConnection;
 use StORM\Meta\Relation;
 use StORM\Meta\RelationNxN;
+use StORM\SchemaManager;
 
 abstract class BaseResolver
 {
-	public function __construct(protected readonly Container $container)
-	{
+	public function __construct(
+		protected readonly Container $container,
+		protected readonly SchemaManager $schemaManager,
+		protected readonly DIConnection $connection,
+	) {
 	}
 
 	/**
