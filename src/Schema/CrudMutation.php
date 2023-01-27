@@ -4,6 +4,7 @@ namespace LqGrAphi\Schema;
 
 use GraphQL\Type\Definition\InputType;
 use GraphQL\Type\Definition\NullableType;
+use GraphQL\Type\Definition\Type;
 use Nette\DI\Container;
 use Nette\Utils\Strings;
 
@@ -21,7 +22,7 @@ abstract class CrudMutation extends BaseMutation
 	 */
 	abstract public function getClass(): string;
 
-	public function __construct(protected Container $container, array $config = [])
+	public function __construct(protected Container $container, array $config)
 	{
 		/** @var \LqGrAphi\Schema\TypeRegister $typeRegister */
 		$typeRegister = $this->container->getByType(TypeRegister::class);
@@ -33,28 +34,31 @@ abstract class CrudMutation extends BaseMutation
 		$updateInputType = $this->getUpdateInputType();
 
 		\assert($outputType instanceof NullableType);
+		\assert($createInputType instanceof Type);
 		\assert($createInputType instanceof NullableType);
+		\assert($updateInputType instanceof Type);
 		\assert($updateInputType instanceof NullableType);
 
 		$config = $this->mergeFields($config, [
 			'fields' => [
 				"{$baseName}Create" => [
-					'type' => TypeRegister::nonNull($outputType),
-					'args' => ['input' => TypeRegister::nonNull($createInputType),],
+					'type' => Type::nonNull($outputType),
+					'args' => ['input' => Type::nonNull($createInputType),],
 				],
 				"{$baseName}Update" => [
-					'type' => TypeRegister::nonNull($outputType),
+					'type' => Type::nonNull($outputType),
 					'args' => [
-						'input' => TypeRegister::nonNull($updateInputType),
+						'input' => Type::nonNull($updateInputType),
 						],
 				],
 				"{$baseName}Delete" => [
-					'type' => TypeRegister::nonNull(TypeRegister::int()),
-					'args' => [BaseType::ID_NAME => TypeRegister::listOf(TypeRegister::id()),],
+					'type' => Type::nonNull(Type::int()),
+					'args' => [BaseType::ID_NAME => Type::listOf(Type::id()),],
 				],
 			],
 		]);
 
+		// @phpstan-ignore-next-line
 		parent::__construct($container, $config);
 	}
 

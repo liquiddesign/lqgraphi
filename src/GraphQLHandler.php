@@ -179,7 +179,9 @@ class GraphQLHandler
 
 			return $result;
 		} catch (\Throwable $e) {
-			$this->connection->getLink()->rollBack();
+			if ($this->connection->getLink()->inTransaction()) {
+				$this->connection->getLink()->rollBack();
+			}
 
 			if ($this->container->getParameters()['debugMode'] && !$this->container->getParameters()['productionMode']) {
 				throw $e;

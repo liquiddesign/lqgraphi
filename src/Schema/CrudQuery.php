@@ -42,7 +42,7 @@ abstract class CrudQuery extends BaseQuery
 				"{$baseName}One" => [
 					'type' => $outputType,
 					'args' => [
-						BaseType::ID_NAME => TypeRegister::nonNull(TypeRegister::id()),
+						BaseType::ID_NAME => Type::nonNull(Type::id()),
 					],
 				],
 				"{$baseName}Many" => [
@@ -52,7 +52,7 @@ abstract class CrudQuery extends BaseQuery
 					],
 				],
 				"{$baseName}ManyTotalCount" => [
-					'type' => $this->typeRegister::nonNull($this->typeRegister::int()),
+					'type' => Type::nonNull(Type::int()),
 					'args' => [
 						'manyInput' => $this->typeRegister->getManyInputWithDefaultValue(),
 					],
@@ -68,7 +68,7 @@ abstract class CrudQuery extends BaseQuery
 				],
 			];
 			$localConfig['fields']["{$baseName}CollectionTotalCount"] = [
-				'type' => $this->typeRegister::nonNull($this->typeRegister::int()),
+				'type' => Type::nonNull(Type::int()),
 				'args' => [
 					'manyInput' => $this->typeRegister->getManyInputWithDefaultValue(),
 				],
@@ -77,6 +77,7 @@ abstract class CrudQuery extends BaseQuery
 
 		$localConfig['fields'] += $this->addCustomFields($baseName);
 
+		// @phpstan-ignore-next-line
 		parent::__construct($container, $this->mergeFields($config, $localConfig));
 	}
 

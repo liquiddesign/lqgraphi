@@ -21,7 +21,7 @@ use StORM\Meta\RelationNxN;
 use StORM\RelationCollection;
 use StORM\SchemaManager;
 
-class TypeRegister extends Type
+class TypeRegister
 {
 	/**
 	 * @var array<string, mixed>
@@ -100,7 +100,7 @@ class TypeRegister extends Type
 		$stormStructure = $this->schemaManager->getStructure($class);
 
 		$fields = $includeId ? [
-			BaseType::ID_NAME => static::nonNull(static::id()),
+			BaseType::ID_NAME => Type::nonNull(Type::id()),
 		] : [];
 
 		foreach ($reflection->getProperties(\ReflectionProperty::IS_PUBLIC) as $property) {
@@ -138,10 +138,10 @@ class TypeRegister extends Type
 			) {
 				$array = false;
 				$type = match ($typeName) {
-					'int' => static::int(),
-					'float' => static::float(),
-					'bool' => static::boolean(),
-					'string' => static::string(),
+					'int' => Type::int(),
+					'float' => Type::float(),
+					'bool' => Type::boolean(),
+					'string' => Type::string(),
 					default => null,
 				};
 
@@ -181,13 +181,13 @@ class TypeRegister extends Type
 				}
 
 				if (($array || ($forceAllOptional === false && ((!$forceOptional && $forceRequired) || (!$forceOptional && !$reflectionType->allowsNull())))) && $type instanceof NullableType) {
-					$type = static::nonNull($type);
+					$type = Type::nonNull($type);
 				}
 
 				if ($array) {
 					\assert($type instanceof Type);
 
-					$type = static::nonNull(static::listOf($type));
+					$type = Type::nonNull(Type::listOf($type));
 				}
 
 				return $type;
@@ -226,7 +226,7 @@ class TypeRegister extends Type
 		$stormStructure = $this->schemaManager->getStructure($class);
 
 		$fields = $includeId ? [
-			BaseType::ID_NAME => static::nonNull(static::id()),
+			BaseType::ID_NAME => Type::nonNull(Type::id()),
 		] : [];
 
 		foreach ($reflection->getProperties(\ReflectionProperty::IS_PUBLIC) as $property) {
@@ -253,10 +253,10 @@ class TypeRegister extends Type
 
 			$array = false;
 			$type = match ($typeName) {
-				'int' => static::int(),
-				'float' => static::float(),
-				'bool' => static::boolean(),
-				'string' => static::string(),
+				'int' => Type::int(),
+				'float' => Type::float(),
+				'bool' => Type::boolean(),
+				'string' => Type::string(),
 				default => null,
 			};
 
@@ -281,7 +281,7 @@ class TypeRegister extends Type
 					$array = true;
 				}
 
-				$type = static::string();
+				$type = Type::string();
 			}
 
 			$isForceRequired = Arrays::contains($forceRequired, $name);
@@ -299,22 +299,22 @@ class TypeRegister extends Type
 						)
 					)
 				) && $type instanceof NullableType) {
-				$type = static::nonNull($type);
+				$type = Type::nonNull($type);
 			}
 
 			if ($array) {
 				\assert($type instanceof Type);
 
-				$type = static::listOf($type);
+				$type = Type::listOf($type);
 			}
 
 			if (isset($relation)) {
 				if ($relation instanceof RelationNxN) {
 					$relationFields = [];
 
-					$relationFields['add'] = $this::listOf($this::nonNull($this::id()));
-					$relationFields['remove'] = $this::listOf($this::nonNull($this::id()));
-					$relationFields['replace'] = $this::listOf($this::nonNull($this::id()));
+					$relationFields['add'] = Type::listOf(Type::nonNull(Type::id()));
+					$relationFields['remove'] = Type::listOf(Type::nonNull(Type::id()));
+					$relationFields['replace'] = Type::listOf(Type::nonNull(Type::id()));
 
 					$fields[$name . 'IDs'] = $this->types[Strings::firstUpper($name) . 'IDs'] ??= new InputObjectType([
 						'name' => Strings::firstUpper($name) . 'IDs',
@@ -323,10 +323,10 @@ class TypeRegister extends Type
 
 					$fields[$name . 'OBJs'] = function () use ($relation) {
 						/** @phpstan-ignore-next-line */
-						return $this::listOf($this->getInputType($relation->getTarget()));
+						return Type::listOf($this->getInputType($relation->getTarget()));
 					};
 				} elseif ($relation instanceof Relation) {
-					$fields[$name . 'ID'] = $this::id();
+					$fields[$name . 'ID'] = Type::id();
 
 					$fields[$name . 'OBJ'] = function () use ($relation) {
 						return $this->getInputType($relation->getTarget());
@@ -530,8 +530,8 @@ class TypeRegister extends Type
 
 		return $this->types[$name] ??= new \GraphQL\Type\Definition\ObjectType(
 			ObjectBuilder::create(Strings::firstUpper($name))->setFields([
-				FieldBuilder::create('data', TypeRegister::nonNull(TypeRegister::listOf($type)))->build(),
-				FieldBuilder::create('onPageCount', TypeRegister::nonNull(TypeRegister::int()))->build(),
+				FieldBuilder::create('data', Type::nonNull(Type::listOf($type)))->build(),
+				FieldBuilder::create('onPageCount', Type::nonNull(Type::int()))->build(),
 			])->build(),
 		);
 	}
@@ -589,7 +589,7 @@ class TypeRegister extends Type
 			'name' => 'ManyInput',
 			'fields' => [
 				'sort' => [
-					'type' => $this::string(),
+					'type' => Type::string(),
 					'defaultValue' => BaseType::DEFAULT_SORT,
 				],
 				'order' => [
@@ -597,11 +597,11 @@ class TypeRegister extends Type
 					'defaultValue' => BaseType::DEFAULT_ORDER,
 				],
 				'limit' => [
-					'type' => $this::int(),
+					'type' => Type::int(),
 					'defaultValue' => BaseType::DEFAULT_LIMIT,
 				],
 				'page' => [
-					'type' => $this::int(),
+					'type' => Type::int(),
 					'defaultValue' => BaseType::DEFAULT_PAGE,
 				],
 				'filters' => [
