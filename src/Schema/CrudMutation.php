@@ -22,7 +22,7 @@ abstract class CrudMutation extends BaseMutation
 	 */
 	abstract public function getClass(): string;
 
-	public function __construct(protected Container $container, array $config)
+	public function __construct(protected Container $container, array $config = [])
 	{
 		/** @var \LqGrAphi\Schema\TypeRegister $typeRegister */
 		$typeRegister = $this->container->getByType(TypeRegister::class);

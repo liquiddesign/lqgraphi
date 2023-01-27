@@ -28,7 +28,7 @@ abstract class CrudQuery extends BaseQuery
 	 */
 	abstract public function getClass(): string;
 
-	public function __construct(protected Container $container, array $config)
+	public function __construct(protected Container $container, array $config = [])
 	{
 		$this->typeRegister = $this->container->getByType(TypeRegister::class);
 
