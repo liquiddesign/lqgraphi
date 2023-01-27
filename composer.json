@@ -19,7 +19,9 @@
         "ext-json": "*",
         "webonyx/graphql-php": "^15.0.1",
         "contributte/psr7-http-message": "^0.8.0",
-        "haydenpierce/class-finder": "^0.4.3"
+        "haydenpierce/class-finder": "^0.4.3",
+        "mll-lab/graphql-php-scalars": "^6.0",
+        "simpod/graphql-utils": "^0.6.0"
     },
     "require-dev": {
         "nette/tester": "^2.4",
