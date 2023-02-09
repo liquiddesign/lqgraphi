@@ -95,7 +95,11 @@ abstract class BaseResolver
 
 		foreach (\array_keys($fieldSelection) as $select) {
 			if (Arrays::contains($relations, $select)) {
-				$ormFieldSelection[$select] = "this.fk_$select";
+				$relation = $allRelations[$select];
+
+				if ($relation->isKeyHolder()) {
+					$ormFieldSelection[$select] = "this.{$relation->getSourceKey()}";
+				}
 
 				continue;
 			}
@@ -134,21 +138,34 @@ abstract class BaseResolver
 				continue;
 			}
 
-			/** @var class-string<\StORM\Entity> $relationClassType */
-			$relationClassType = $allRelations[$relationName]->getTarget();
+			$relation = $allRelations[$relationName];
 
 			$relationObjects = $this->fetchResultHelper(
-				$collection->getConnection()->findRepository($relationClassType)
+				$collection->getConnection()->findRepository($relation->getTarget())
 					->many()
-					->join(['relation' => $collection->getRepository()->getStructure()->getTable()->getName()], 'this.' . BaseType::ID_NAME . ' = relation.fk_' . $relationName)
+					->join(['relation' => $collection->getRepository()->getStructure()->getTable()->getName()], "this.{$relation->getTargetKey()} = relation.{$relation->getSourceKey()}")
 					->setIndex('originalId')
 					->where('relation.' . BaseType::ID_NAME, $keys),
 				$fieldSelection[$relationName],
 				'relation.' . BaseType::ID_NAME,
 			);
 
-			foreach ($objects as $object) {
-				$objects[$object[BaseType::ID_NAME]][$relationName] = $relationObjects[$object[BaseType::ID_NAME]] ?? null;
+			if ($relation->isKeyHolder()) {
+				foreach ($objects as $object) {
+					$objects[$object[BaseType::ID_NAME]][$relationName] = $relationObjects[$object[BaseType::ID_NAME]] ?? null;
+				}
+			} else {
+				foreach (\array_keys($objects) as $objectKey) {
+					$objects[$objectKey][$relationName] = [];
+				}
+
+				foreach ($relationObjects as $relationObject) {
+					if (isset($objects[$relationObject['originalId']][$relationName])) {
+						$objects[$relationObject['originalId']][$relationName][$relationObject[BaseType::ID_NAME]] = $relationObject;
+					} else {
+						$objects[$relationObject['originalId']][$relationName] = [$relationObject[BaseType::ID_NAME] => $relationObject];
+					}
+				}
 			}
 		}
 
