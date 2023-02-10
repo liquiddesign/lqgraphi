@@ -48,10 +48,12 @@ abstract class CrudResolver extends BaseResolver
 	 * @return array<mixed>|null
 	 * @throws \LqGrAphi\Resolvers\Exceptions\NotFoundException
 	 * @throws \ReflectionException
-	 * @throws \StORM\Exception\GeneralException
+	 * @throws \StORM\Exception\GeneralException|\LqGrAphi\Resolvers\Exceptions\BadRequestException
 	 */
 	public function one(array $rootValue, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): ?array
 	{
+		unset($context);
+
 		if ($this->onBeforeGetOne) {
 			[$rootValue, $args] = \call_user_func($this->onBeforeGetOne, $rootValue, $args);
 		}
@@ -73,6 +75,8 @@ abstract class CrudResolver extends BaseResolver
 	 */
 	public function many(array $rootValue, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): array
 	{
+		unset($context);
+
 		if ($this->onBeforeGetAll) {
 			[$rootValue, $args] = \call_user_func($this->onBeforeGetAll, $rootValue, $args);
 		}
@@ -106,6 +110,8 @@ abstract class CrudResolver extends BaseResolver
 	 */
 	public function collection(array $rootValue, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): array
 	{
+		unset($context);
+
 		if ($this->onBeforeGetAll) {
 			[$rootValue, $args] = \call_user_func($this->onBeforeGetAll, $rootValue, $args);
 		}
@@ -245,6 +251,8 @@ abstract class CrudResolver extends BaseResolver
 	 */
 	public function delete(array $rootValue, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): int
 	{
+		unset($context, $resolveInfo);
+
 		if ($this->onBeforeDelete) {
 			[$rootValue, $args] = \call_user_func($this->onBeforeDelete, $rootValue, $args);
 		}

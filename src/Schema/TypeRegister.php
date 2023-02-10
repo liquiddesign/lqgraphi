@@ -6,7 +6,6 @@ use GraphQL\Type\Definition\InputObjectType;
 use GraphQL\Type\Definition\InputType;
 use GraphQL\Type\Definition\NullableType;
 use GraphQL\Type\Definition\Type;
-use JetBrains\PhpStorm\Deprecated;
 use MLL\GraphQLScalars\Date;
 use MLL\GraphQLScalars\DateTime;
 use MLL\GraphQLScalars\JSON;
@@ -206,7 +205,6 @@ class TypeRegister
 	 * @param bool $forceAllOptional
 	 * @param bool $includeId
 	 * @param bool $setDefaultValues
-	 * @param \LqGrAphi\Schema\InputRelationFieldsEnum $inputRelationFieldsEnum
 	 * @return array<mixed>
 	 * @throws \ReflectionException
 	 */
@@ -219,8 +217,6 @@ class TypeRegister
 		bool $forceAllOptional = false,
 		bool $includeId = true,
 		bool $setDefaultValues = false,
-		#[Deprecated]
-		InputRelationFieldsEnum $inputRelationFieldsEnum = InputRelationFieldsEnum::ALL,
 	): array {
 		$reflection = new \ReflectionClass($class);
 		$stormStructure = $this->schemaManager->getStructure($class);
@@ -357,7 +353,6 @@ class TypeRegister
 	 * @param bool $forceAllOptional
 	 * @param bool $includeId
 	 * @param bool $setDefaultValues
-	 * @param \LqGrAphi\Schema\InputRelationFieldsEnum $inputRelationFieldsEnum
 	 * @return array<mixed>
 	 * @throws \ReflectionException
 	 */
@@ -370,8 +365,6 @@ class TypeRegister
 		bool $forceAllOptional = false,
 		bool $includeId = false,
 		bool $setDefaultValues = true,
-		#[Deprecated]
-		InputRelationFieldsEnum $inputRelationFieldsEnum = InputRelationFieldsEnum::ONLY_ADD,
 	): array {
 		return $this->createInputFieldsFromClass(
 			$class,
@@ -382,7 +375,6 @@ class TypeRegister
 			$forceAllOptional,
 			$includeId,
 			$setDefaultValues,
-			$inputRelationFieldsEnum
 		);
 	}
 
@@ -395,7 +387,6 @@ class TypeRegister
 	 * @param bool $forceAllOptional
 	 * @param bool $includeId
 	 * @param bool $setDefaultValues
-	 * @param \LqGrAphi\Schema\InputRelationFieldsEnum $inputRelationFieldsEnum
 	 * @return array<mixed>
 	 * @throws \ReflectionException
 	 */
@@ -408,8 +399,6 @@ class TypeRegister
 		bool $forceAllOptional = true,
 		bool $includeId = true,
 		bool $setDefaultValues = false,
-		#[Deprecated]
-		InputRelationFieldsEnum $inputRelationFieldsEnum = InputRelationFieldsEnum::ALL,
 	): array {
 		return $this->createInputFieldsFromClass(
 			$class,
@@ -420,7 +409,6 @@ class TypeRegister
 			$forceAllOptional,
 			$includeId,
 			$setDefaultValues,
-			$inputRelationFieldsEnum
 		);
 	}
 

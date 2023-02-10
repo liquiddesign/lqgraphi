@@ -28,6 +28,10 @@ abstract class CrudQuery extends BaseQuery
 	 */
 	abstract public function getClass(): string;
 
+	/**
+	 * @param array<mixed> $config
+	 * @throws \Exception
+	 */
 	public function __construct(protected Container $container, array $config = [])
 	{
 		$this->typeRegister = $this->container->getByType(TypeRegister::class);
@@ -87,6 +91,8 @@ abstract class CrudQuery extends BaseQuery
 	 */
 	public function addCustomFields(string $baseName): array
 	{
+		unset($baseName);
+
 		return [];
 	}
 

@@ -101,6 +101,7 @@ class GraphQLHandler
 						$incrementalResolverName = '';
 
 						$matchedFieldNameCount = \count($matchedFieldName);
+						$matchedResolver = null;
 
 						for ($i = 0; $i < $matchedFieldNameCount - 1; $i++) {
 							$incrementalResolverName .= $matchedFieldName[$i];
@@ -114,10 +115,10 @@ class GraphQLHandler
 								continue;
 							}
 
-							return [$resolverName, Strings::firstLower(\implode('', $matchedFieldName))];
+							$matchedResolver = [$resolverName, Strings::firstLower(\implode('', $matchedFieldName))];
 						}
 
-						return [null, null];
+						return $matchedResolver ?: [null, null];
 					});
 
 					$resolver = null;

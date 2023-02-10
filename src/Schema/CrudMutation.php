@@ -22,6 +22,10 @@ abstract class CrudMutation extends BaseMutation
 	 */
 	abstract public function getClass(): string;
 
+	/**
+	 * @param array<mixed> $config
+	 * @throws \Exception
+	 */
 	public function __construct(protected Container $container, array $config = [])
 	{
 		/** @var \LqGrAphi\Schema\TypeRegister $typeRegister */
