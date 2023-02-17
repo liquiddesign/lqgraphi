@@ -128,6 +128,12 @@ abstract class BaseResolver
 		$collection->setSelect(($selectOriginalId ? ['originalId' => $selectOriginalId] : []) + $ormFieldSelection);
 
 		foreach ($collection->fetchArray(\stdClass::class) as $object) {
+			if ($selectOriginalId) {
+				$objects[$object->originalId][$object->{BaseType::ID_NAME}] = \get_object_vars($object);
+
+				continue;
+			}
+
 			$objects[$object->{BaseType::ID_NAME}] = \get_object_vars($object);
 		}
 
@@ -144,7 +150,6 @@ abstract class BaseResolver
 				$collection->getConnection()->findRepository($relation->getTarget())
 					->many()
 					->join(['relation' => $collection->getRepository()->getStructure()->getTable()->getName()], "this.{$relation->getTargetKey()} = relation.{$relation->getSourceKey()}")
-					->setIndex('originalId')
 					->where('relation.' . BaseType::ID_NAME, $keys),
 				$fieldSelection[$relationName],
 				'relation.' . BaseType::ID_NAME,
@@ -152,7 +157,9 @@ abstract class BaseResolver
 
 			if ($relation->isKeyHolder()) {
 				foreach ($objects as $object) {
-					$objects[$object[BaseType::ID_NAME]][$relationName] = $relationObjects[$object[BaseType::ID_NAME]] ?? null;
+					$objects[$object[BaseType::ID_NAME]][$relationName] = isset($relationObjects[$object[BaseType::ID_NAME]]) && $relationObjects[$object[BaseType::ID_NAME]] ?
+						Arrays::first($relationObjects[$object[BaseType::ID_NAME]]) :
+						null;
 				}
 			} else {
 				foreach (\array_keys($objects) as $objectKey) {

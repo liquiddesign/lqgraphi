@@ -611,4 +611,18 @@ class TypeRegister
 			'defaultValue' => $defaultValue,
 		];
 	}
+
+	public static function getNullableType(Type $type): NullableType&Type
+	{
+		\assert($type instanceof NullableType);
+
+		return $type;
+	}
+
+	public static function getNonNullableType(Type $type): Type
+	{
+		\assert(!$type instanceof NullableType);
+
+		return $type;
+	}
 }

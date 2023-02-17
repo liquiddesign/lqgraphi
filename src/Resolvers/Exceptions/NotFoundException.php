@@ -4,9 +4,9 @@ namespace LqGrAphi\Resolvers\Exceptions;
 
 class NotFoundException extends BaseException
 {
-	public function __construct(string $id)
+	public function __construct(string $id, ?string $type = null)
 	{
-		parent::__construct("Object '$id' not found");
+		parent::__construct(($type ?: 'Object') . " with uuid '$id' not found");
 	}
 
 	public function getCategory(): string
