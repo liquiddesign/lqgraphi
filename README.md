@@ -4,8 +4,8 @@ GraphQL API library for Liquid Design ecosystem.
 
 ## Functions
 - Auto types creation from PHP classes to TypeRegister (Storm entities)
-- Autoload of Queries and Mutations
-- Caching of schema
+- Autoload of Queries, Mutations and Types from namespaces
+- Caching of schema, persisted queries and mutations
 - Universal CRUD query, mutations and resolvers for generic generation and resolving
 - Recursive data fetcher of Storm entities from database based on requested query (highly optimized - makes only one query per entity class - simulating dataloader)
 
@@ -14,8 +14,12 @@ GraphQL API library for Liquid Design ecosystem.
 This package works great with extended packages with types for LQD packages:
 
 - https://github.com/liquiddesign/eshop-api
+- - https://github.com/liquiddesign/admin-api
+- - https://github.com/liquiddesign/security-api
 
 ## Installation
+
+This package requires PHP 8.2 or higher.
 
 `composer require liquiddesign/lqgraphi`
 
@@ -26,17 +30,15 @@ extensions:
     typeRegister: LqGrAphi\LqGrAphiDI
 
 typeRegister:
-    resolversNamespace: EshopApi\Resolvers
-    queryAndMutationsNamespace: EshopApi\Schema\Types
+    resolvers: 
+        - EshopApi\Resolvers
+    queriesAndMutations:
+        - EshopApi\Schema\Types
     types:
         output:
-            customerGroup: EshopApi\Schema\Outputs\CustomerGroupOutput
-            pricelist: EshopApi\Schema\Outputs\PricelistOutput
-            address: EshopApi\Schema\Outputs\AddressOutput
-            productGetProducts: EshopApi\Schema\Outputs\ProductGetProductsOutput
-        crud:
-            customer: [EshopApi\Schema\Outputs\CustomerOutput, EshopApi\Schema\Inputs\CustomerCreateInput, EshopApi\Schema\Inputs\CustomerUpdateInput]
-            product: [EshopApi\Schema\Outputs\ProductOutput, EshopApi\Schema\Inputs\ProductCreateInput, EshopApi\Schema\Inputs\ProductUpdateInput]
+            - EshopApi\Schema\Outputs
+        input:
+            - EshopApi\Schema\Inputs
 ```
 
 ## Entry point
@@ -88,9 +90,11 @@ For more info visit documentation of [webonyx/graphql-php](https://webonyx.githu
 ### ClassOutput
 
 There is interface `\LqGrAphi\Schema\ClassOutput` with method `getClass`.
-If you use it, TypeRegister will save this mapping ang when you call `getOutputType` you can simply pass class-string instead of name from config.
+If you use it, TypeRegister will save this mapping ang when you call `getOutputType` you can simply pass class-string instead of name.
 
 ### ClassInput
+
+Same as *ClassOutput* for inputs.
 
 ### Relations
 
@@ -155,6 +159,12 @@ services:
 		    - LqGrAphi\Resolvers\BaseResolver
 ```
 
+### Cache
+Handler is using cache to remember queries and mutations. If you send same query twice, it will be resolved from cache and directly passed to resolver.
+This approach significantly increases performance. Data returned from resolver are validated only with first request. This approach is not safe, when resolvers are not fully tested.
+
+You can also pass *queryId* directly instead of query. Queries are hashed by md5, so you can just hash you query with md5 and send it as queryId. But remember, that you still need to send at least one request with query to validate it.
+
 ### CRUD
 
 You can write your types and queries by yourself, but most of the time you just want to take existing entity and make crud operations for it.
@@ -218,15 +228,7 @@ class CustomerUpdateInput extends BaseInput
 }
 ```
 
- register types in config as crud types
-```neon
-typeRegister:
-    types:
-        crud:
-            customer: [EshopApi\Schema\Outputs\CustomerOutput, EshopApi\Schema\Inputs\CustomerCreateInput, EshopApi\Schema\Inputs\CustomerUpdateInput]
-```
-
-and lastly create resolver
+register your types namespace in config and lastly create resolver
 
 ```php
 class CustomerResolver extends CrudResolver
@@ -237,7 +239,7 @@ class CustomerResolver extends CrudResolver
 	}
 }
 ```
-and that's all, you can query one, many or collection and mutate create, update and delete operations.
+That's all, you can query one, many or collection and mutate create, update and delete operations.
 
 #### Helpers for CRUD
 
@@ -248,7 +250,7 @@ To help working with API there is some automatic improvements
 
 #### Filtering
 
-Filters are input fields of type JSON, which are parsed to repository allowed *filter* functions.
+Filters are input fields of type JSON, which are parsed to repository allowed *filter* functions. Due to this, filters are dynamically typed.
 
 #### Fetch result
 
@@ -268,3 +270,6 @@ If no language in "Accept-Language" header is supported, then primary language f
     - Refactor TypeRegister
 - Security - guards, login
 - Automatic testing
+
+## Developers info
+Project uses PHPStan (level 8) and PHP-CS-Fixer for code quality.

@@ -25,7 +25,6 @@ use Nette\Caching\Cache;
 use Nette\Caching\Storage;
 use Nette\DI\Container;
 use Nette\Http\Request;
-use Nette\Utils\Arrays;
 use Nette\Utils\FileSystem;
 use Nette\Utils\Strings;
 use StORM\Connection;
@@ -36,14 +35,14 @@ use Tracy\ILogger;
 class GraphQLHandler
 {
 	/**
-	 * @var class-string
+	 * @var array<class-string>
 	 */
-	private string $queryAndMutationsNamespace;
+	private array $queriesAndMutationsNamespaces;
 
 	/**
-	 * @var class-string
+	 * @var array<class-string>
 	 */
-	private string $resolversNamespace;
+	private array $resolversNamespaces;
 
 	private readonly Cache $cache;
 
@@ -78,7 +77,7 @@ class GraphQLHandler
 			if (isset($graphqlRequest['queryId'])) {
 				$cachedQueryId = $graphqlRequest['queryId'];
 			} elseif (isset($graphqlRequest['query']) && \is_string($graphqlRequest['query']) && Strings::length($graphqlRequest['query']) > 0) {
-				$cachedQueryId = \md5($graphqlRequest['query']);
+				$cachedQueryId = \md5($graphqlRequest['query'] . \serialize($graphqlRequest['variables'] ?? '') . ($graphqlRequest['operationName'] ?? ''));
 			}
 
 			$cachedQuery = $this->cache->load($cachedQueryId);
@@ -104,6 +103,10 @@ class GraphQLHandler
 					try {
 						$result[$key] = $resolver->{$query['action']}([], $query['args'], $this->getContext(), $query['fieldSelection']);
 					} catch (BaseException $e) {
+						if ($this->getDebugFlag()) {
+							throw $e;
+						}
+
 						if ($e->isClientSafe()) {
 							$errors[] = [
 								'message' => $e->getMessage(),
@@ -118,6 +121,10 @@ class GraphQLHandler
 							Debugger::log($e, ILogger::EXCEPTION);
 						}
 					} catch (\Throwable $e) {
+						if ($this->getDebugFlag()) {
+							throw $e;
+						}
+
 						$errors[] = [
 							'message' => 'Internal server error',
 							'path' => [$key],
@@ -144,11 +151,6 @@ class GraphQLHandler
 				'fieldResolver' => function ($objectValue, array $args, GraphQLContext $context, ResolveInfo $info) {
 					$fieldName = $info->fieldName;
 
-					/** @var array<string> $allAvailableResolvers */
-					$allAvailableResolvers = $this->cache->load('allResolvers', function (): array {
-						return ClassFinder::getClassesInNamespace($this->getResolversNamespace(), ClassFinder::RECURSIVE_MODE);
-					});
-
 					if (isset($objectValue[$fieldName]) || (\is_array($objectValue) && \array_key_exists($fieldName, $objectValue))) {
 						return $objectValue[$fieldName];
 					}
@@ -157,17 +159,12 @@ class GraphQLHandler
 					 * @var class-string|null $resolverName
 					 * @var string $actionName
 					 */
-					[$resolverName, $actionName] = $this->cache->load($fieldName, function () use ($fieldName, $allAvailableResolvers): array {
+					[$resolverName, $actionName] = $this->cache->load($fieldName, function () use ($fieldName): array {
+
 						$matchedFieldName = \preg_split('~^[^A-Z]+\K|[A-Z][^A-Z]+\K~', $fieldName, 0, \PREG_SPLIT_NO_EMPTY);
 
 						if (!$matchedFieldName || \count($matchedFieldName) < 2) {
 							return [null, null];
-						}
-
-						$resolversNamespace = $this->getResolversNamespace();
-
-						if (!Strings::endsWith($resolversNamespace, '\\')) {
-							$resolversNamespace .= '\\';
 						}
 
 						$incrementalResolverName = '';
@@ -179,11 +176,11 @@ class GraphQLHandler
 							$incrementalResolverName .= $matchedFieldName[$i];
 
 							/** @var class-string $resolverName */
-							$resolverName = $resolversNamespace . Strings::firstUpper($incrementalResolverName) . 'Resolver';
+							$resolverName = Strings::firstUpper($incrementalResolverName) . 'Resolver';
 
 							unset($matchedFieldName[$i]);
 
-							if (!Arrays::contains($allAvailableResolvers, $resolverName)) {
+							if (!$resolverName = $this->getResolver($resolverName)) {
 								continue;
 							}
 
@@ -302,47 +299,49 @@ class GraphQLHandler
 
 	public function getSchema(): Schema
 	{
-		$classes = ClassFinder::getClassesInNamespace($this->getQueryAndMutationsNamespace(), ClassFinder::RECURSIVE_MODE);
-
-		if (!$classes) {
-			throw new \Exception('You need to specify at least one query or mutation!');
-		}
-
 		$queryFields = [];
 		$mutationFields = [];
 
-		foreach ($classes as $class) {
-			if (!\class_exists($class)) {
-				throw new \Exception("Class '$class' not found!");
-			}
+		foreach ($this->getQueriesAndMutationsNamespaces() as $namespace) {
+			$classes = ClassFinder::getClassesInNamespace($namespace, ClassFinder::RECURSIVE_MODE);
 
-			$type = new $class($this->container);
-
-			if ($type instanceof BaseQuery) {
-				foreach ($type->getFields() as $field) {
-					if (isset($queryFields[$field->getName()])) {
-						throw new \Exception("Query '$field->name' already exists!");
-					}
-
-					$queryFields[$field->getName()] = $field;
+			foreach ($classes as $class) {
+				if (!\class_exists($class)) {
+					throw new \Exception("Class '$class' not found!");
 				}
 
-				continue;
-			}
+				$type = new $class($this->container);
 
-			if ($type instanceof BaseMutation) {
-				foreach ($type->getFields() as $field) {
-					if (isset($queryFields[$field->getName()])) {
-						throw new \Exception("Mutation '$field->name' already exists!");
+				if ($type instanceof BaseQuery) {
+					foreach ($type->getFields() as $field) {
+						if (isset($queryFields[$field->getName()])) {
+							throw new \Exception("Query '$field->name' already exists!");
+						}
+
+						$queryFields[$field->getName()] = $field;
 					}
 
-					$mutationFields[$field->getName()] = $field;
+					continue;
 				}
 
-				continue;
-			}
+				if ($type instanceof BaseMutation) {
+					foreach ($type->getFields() as $field) {
+						if (isset($queryFields[$field->getName()])) {
+							throw new \Exception("Mutation '$field->name' already exists!");
+						}
 
-			throw new \Exception("Class '$class' is not extending BaseQuery or BaseMutation. Can´t determine type!");
+						$mutationFields[$field->getName()] = $field;
+					}
+
+					continue;
+				}
+
+				throw new \Exception("Class '$class' is not extending BaseQuery or BaseMutation. Can´t determine type!");
+			}
+		}
+
+		if (!$queryFields && !$mutationFields) {
+			throw new \Exception('You need to specify at least one query or mutation!');
 		}
 
 		$schema = [];
@@ -377,35 +376,35 @@ class GraphQLHandler
 	}
 
 	/**
-	 * @return class-string
+	 * @return array<class-string>
 	 */
-	public function getQueryAndMutationsNamespace(): string
+	public function getQueriesAndMutationsNamespaces(): array
 	{
-		return $this->queryAndMutationsNamespace;
+		return $this->queriesAndMutationsNamespaces;
 	}
 
 	/**
-	 * @param class-string $queryAndMutationsNamespace
+	 * @param array<class-string> $queriesAndMutationsNamespaces
 	 */
-	public function setQueryAndMutationsNamespace(string $queryAndMutationsNamespace): void
+	public function setQueriesAndMutationsNamespaces(array $queriesAndMutationsNamespaces): void
 	{
-		$this->queryAndMutationsNamespace = $queryAndMutationsNamespace;
+		$this->queriesAndMutationsNamespaces = $queriesAndMutationsNamespaces;
 	}
 
 	/**
-	 * @return class-string
+	 * @return array<class-string>
 	 */
-	public function getResolversNamespace(): string
+	public function getResolversNamespaces(): array
 	{
-		return $this->resolversNamespace;
+		return $this->resolversNamespaces;
 	}
 
 	/**
-	 * @param class-string $resolversNamespace
+	 * @param array<class-string> $resolversNamespace
 	 */
-	public function setResolversNamespace(string $resolversNamespace): void
+	public function setResolversNamespaces(array $resolversNamespace): void
 	{
-		$this->resolversNamespace = $resolversNamespace;
+		$this->resolversNamespaces = $resolversNamespace;
 	}
 
 	private function getContext(): GraphQLContext
@@ -424,5 +423,35 @@ class GraphQLHandler
 			$this->getDebugFlag(),
 			$detectedLanguage,
 		);
+	}
+
+	/**
+	 * @return array<string>
+	 * @throws \Throwable
+	 */
+	private function getAllAvailableResolvers(): array
+	{
+		return $this->cache->load('allResolvers', function (): array {
+			$resolvers = [];
+
+			foreach ($this->getResolversNamespaces() as $namespace) {
+				foreach (ClassFinder::getClassesInNamespace($namespace, ClassFinder::RECURSIVE_MODE) as $class) {
+					$resolvers[] = $class;
+				}
+			}
+
+			return $resolvers;
+		});
+	}
+
+	private function getResolver(string $name): ?string
+	{
+		foreach ($this->getAllAvailableResolvers() as $resolver) {
+			if (Strings::endsWith($resolver, '\\' . $name)) {
+				return $resolver;
+			}
+		}
+
+		return null;
 	}
 }

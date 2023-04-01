@@ -525,22 +525,23 @@ class TypeRegister
 	}
 
 	/**
-	 * @param string $name
-	 * @param class-string $class
+	 * Register GraphQL type by his class name
+	 * @param string $typeName
+	 * @param class-string $typeClass
 	 */
-	public function set(string $name, string $class): void
+	public function set(string $typeName, string $typeClass): void
 	{
-		if (isset($this->typesMap[$name])) {
-			throw new \Exception("Type '$name' is already registered!");
+		if (isset($this->typesMap[$typeName])) {
+			throw new \Exception("Type '$typeName' is already registered!");
 		}
 
-		if ($typeKey = \array_search($class, $this->typesMap)) {
-			$this->typesMap[$name] = "_$typeKey";
+		if ($typeKey = \array_search($typeClass, $this->typesMap)) {
+			$this->typesMap[$typeName] = "_$typeKey";
 
 			return;
 		}
 
-		$this->typesMap[$name] = $class;
+		$this->typesMap[$typeName] = $typeClass;
 	}
 
 	/**
@@ -548,7 +549,7 @@ class TypeRegister
 	 * @param class-string $entityClass
 	 * @throws \Exception
 	 */
-	public function setOutputClass(string $name, string $entityClass): void
+	public function setOutputByEntityClass(string $name, string $entityClass): void
 	{
 		if (isset($this->entityClassOutputTypesMap[$entityClass])) {
 			throw new \Exception("Type '$entityClass' is already registered!");
@@ -562,7 +563,7 @@ class TypeRegister
 	 * @param class-string $entityClass
 	 * @throws \Exception
 	 */
-	public function setInputClass(string $name, string $entityClass): void
+	public function setInputByEntityClass(string $name, string $entityClass): void
 	{
 		if (isset($this->entityClassInputTypesMap[$entityClass])) {
 			throw new \Exception("Type '$entityClass' is already registered!");

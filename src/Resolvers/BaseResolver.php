@@ -47,9 +47,9 @@ abstract class BaseResolver
 		$result = [];
 
 		if (!isset($fieldSelection['data'])) {
-			$result = $this->fetchResultHelper($collection, $fieldSelection);
+			$result = \array_values($this->fetchResultHelper($collection, $fieldSelection));
 		} else {
-			$result['data'] = $this->fetchResultHelper($collection, $fieldSelection['data']);
+			$result['data'] = \array_values($this->fetchResultHelper($collection, $fieldSelection['data']));
 		}
 
 		if (isset($fieldSelection['onPageCount'])) {
@@ -168,8 +168,11 @@ abstract class BaseResolver
 					$objects[$objectKey][$relationName] = [];
 				}
 
-				foreach ($relationObjects as $relationObjectId => $relationObject) {
-					$objects[$relationObject['originalId']][$relationName][$relationObjectId] = $relationObject;
+				foreach ($relationObjects as $relationObject) {
+					$originalId = $relationObject['originalId'];
+					unset($relationObject['originalId']);
+
+					$objects[$originalId][$relationName][] = $relationObject;
 				}
 			}
 		}
@@ -197,8 +200,11 @@ abstract class BaseResolver
 				$objects[$objectKey][$relationName] = [];
 			}
 
-			foreach ($relationObjects as $relationObjectId => $relationObject) {
-				$objects[$relationObject['originalId']][$relationName][$relationObjectId] = $relationObject;
+			foreach ($relationObjects as $relationObject) {
+				$originalId = $relationObject['originalId'];
+				unset($relationObject['originalId']);
+
+				$objects[$originalId][$relationName][] = $relationObject;
 			}
 		}
 

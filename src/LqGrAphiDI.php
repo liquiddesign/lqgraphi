@@ -4,27 +4,26 @@ declare(strict_types=1);
 
 namespace LqGrAphi;
 
+use HaydenPierce\ClassFinder\ClassFinder;
 use LqGrAphi\Schema\ClassInput;
 use LqGrAphi\Schema\ClassOutput;
 use LqGrAphi\Schema\TypeRegister;
 use Nette\DI\CompilerExtension;
 use Nette\Schema\Expect;
 use Nette\Schema\Schema;
+use Nette\Utils\Strings;
 
 class LqGrAphiDI extends CompilerExtension
 {
 	public function getConfigSchema(): Schema
 	{
 		return Expect::structure([
-			'resolversNamespace' => Expect::string()->required(),
-			'queryAndMutationsNamespace' => Expect::string()->required(),
+			'resolvers' => Expect::list()->required(),
+			'queriesAndMutations' => Expect::list()->required(),
 			'types' => Expect::structure([
-				'output' => Expect::arrayOf(Expect::string()),
-				'input' => Expect::arrayOf(Expect::string()),
-				'crud' => Expect::arrayOf(Expect::listOf(Expect::string())->assert(function ($value) {
-					return \count($value) >= 1 && \count($value) <= 3;
-				}, 'CRUD type have to has 1-3 classes!')),
-			]),
+				'outputs' => Expect::list()->required(),
+				'inputs' => Expect::list()->required(),
+			])->required(),
 		]);
 	}
 
@@ -37,53 +36,55 @@ class LqGrAphiDI extends CompilerExtension
 		$graphQLHandler = $builder->addDefinition($this->prefix('graphQLHandler'))->setType(GraphQLHandler::class);
 		$typeRegister = $builder->addDefinition($this->prefix('typeRegister'))->setType(TypeRegister::class);
 
-		$graphQLHandler->addSetup('setResolversNamespace', [$config['resolversNamespace']]);
-		$graphQLHandler->addSetup('setQueryAndMutationsNamespace', [$config['queryAndMutationsNamespace']]);
+		$graphQLHandler->addSetup('setResolversNamespaces', [$config['resolvers']]);
+		$graphQLHandler->addSetup('setQueriesAndMutationsNamespaces', [$config['queriesAndMutations']]);
 
-		if (isset($config['types']->output)) {
-			foreach ($config['types']->output as $name => $type) {
-				$typeRegister->addSetup('set', ["{$name}Output", $type]);
+		foreach ($config['types']->outputs as $namespace) {
+			$classes = ClassFinder::getClassesInNamespace($namespace, ClassFinder::RECURSIVE_MODE);
+
+			foreach ($classes as $class) {
+				if (!\class_exists($class)) {
+					throw new \Exception("Class '$class' not found!");
+				}
+
+				$reflection = new \ReflectionClass($class);
+				$typeName = $reflection->getShortName();
+				$typeName = !Strings::endsWith('Output', $typeName) ? $typeName : $typeName . 'Output';
+
+				$typeRegister->addSetup('set', [$typeName, $class]);
+
+				$implements = \class_implements($class);
+
+				if (!isset($implements[ClassOutput::class])) {
+					continue;
+				}
+
+				$typeRegister->addSetup('setOutputByEntityClass', [$typeName, $class::getClass()]);
 			}
 		}
 
-		if (isset($config['types']->input)) {
-			foreach ($config['types']->input as $name => $type) {
-				$typeRegister->addSetup('set', ["{$name}Input", $type]);
+		foreach ($config['types']->inputs as $namespace) {
+			$classes = ClassFinder::getClassesInNamespace($namespace, ClassFinder::RECURSIVE_MODE);
 
-				$implements = \class_implements($type);
+			foreach ($classes as $class) {
+				if (!\class_exists($class)) {
+					throw new \Exception("Class '$class' not found!");
+				}
+
+				$reflection = new \ReflectionClass($class);
+				$typeName = $reflection->getShortName();
+				$typeName = !Strings::endsWith('Input', $typeName) ? $typeName : $typeName . 'Output';
+
+				$typeRegister->addSetup('set', [$typeName, $class]);
+
+				$implements = \class_implements($class);
 
 				if (!isset($implements[ClassInput::class])) {
 					continue;
 				}
 
-				$typeRegister->addSetup('setInputClass', ["{$name}Input", $type::getClass()]);
+				$typeRegister->addSetup('setInputByEntityClass', [$typeName, $class::getClass()]);
 			}
-		}
-
-		foreach ($config['types']?->crud ?? [] as $name => $types) {
-			if (!isset($types[0])) {
-				throw new \Exception('Crud type has to have at least output type!');
-			}
-
-			$typeRegister->addSetup('set', ["{$name}Output", $types[0]]);
-
-			$implements = \class_implements($types[0]);
-
-			if (isset($implements[ClassOutput::class])) {
-				$typeRegister->addSetup('setOutputClass', ["{$name}Output", $types[0]::getClass()]);
-			}
-
-			if (!isset($types[1])) {
-				continue;
-			}
-
-			$typeRegister->addSetup('set', ["{$name}CreateInput", $types[1]]);
-
-			if (!isset($types[2])) {
-				continue;
-			}
-
-			$typeRegister->addSetup('set', ["{$name}UpdateInput", $types[2]]);
 		}
 	}
 }

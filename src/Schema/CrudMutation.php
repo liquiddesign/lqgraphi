@@ -22,6 +22,10 @@ abstract class CrudMutation extends BaseMutation
 	 */
 	abstract public function getClass(): string;
 
+	abstract public function getCreateInputName(): string;
+
+	abstract public function getUpdateInputName(): string;
+
 	/**
 	 * @param array<mixed> $config
 	 * @throws \Exception
@@ -73,12 +77,12 @@ abstract class CrudMutation extends BaseMutation
 
 	public function getCreateInputType(): InputType
 	{
-		return $this->typeRegister->getInputType($this->getName() . 'Create');
+		return $this->typeRegister->getInputType($this->getCreateInputName());
 	}
 
 	public function getUpdateInputType(): InputType
 	{
-		return $this->typeRegister->getInputType($this->getName() . 'Update');
+		return $this->typeRegister->getInputType($this->getUpdateInputName());
 	}
 
 	public function getName(): string
