@@ -44,13 +44,13 @@ abstract class CrudResolver extends BaseResolver
 	 * @param array<mixed> $rootValue
 	 * @param array<mixed> $args
 	 * @param \LqGrAphi\GraphQLContext $context
-	 * @param \GraphQL\Type\Definition\ResolveInfo $resolveInfo
+	 * @param \GraphQL\Type\Definition\ResolveInfo|array<mixed> $resolveInfo
 	 * @return array<mixed>|null
 	 * @throws \LqGrAphi\Resolvers\Exceptions\NotFoundException
 	 * @throws \ReflectionException
 	 * @throws \StORM\Exception\GeneralException|\LqGrAphi\Resolvers\Exceptions\BadRequestException
 	 */
-	public function one(array $rootValue, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): ?array
+	public function one(array $rootValue, array $args, GraphQLContext $context, ResolveInfo|array $resolveInfo): ?array
 	{
 		unset($context);
 
@@ -67,13 +67,13 @@ abstract class CrudResolver extends BaseResolver
 	 * @param array<mixed> $rootValue
 	 * @param array<mixed> $args
 	 * @param \LqGrAphi\GraphQLContext $context
-	 * @param \GraphQL\Type\Definition\ResolveInfo $resolveInfo
+	 * @param \GraphQL\Type\Definition\ResolveInfo|array<mixed> $resolveInfo
 	 * @return array<mixed>
 	 * @throws \LqGrAphi\Resolvers\Exceptions\BadRequestException
 	 * @throws \ReflectionException
 	 * @throws \StORM\Exception\GeneralException
 	 */
-	public function many(array $rootValue, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): array
+	public function many(array $rootValue, array $args, GraphQLContext $context, ResolveInfo|array $resolveInfo): array
 	{
 		unset($context);
 
@@ -88,12 +88,12 @@ abstract class CrudResolver extends BaseResolver
 	 * @param array<mixed> $rootValue
 	 * @param array<mixed> $args
 	 * @param \LqGrAphi\GraphQLContext $context
-	 * @param \GraphQL\Type\Definition\ResolveInfo $resolveInfo
+	 * @param \GraphQL\Type\Definition\ResolveInfo|array<mixed> $resolveInfo
 	 * @throws \LqGrAphi\Resolvers\Exceptions\BadRequestException
 	 * @throws \ReflectionException
 	 * @throws \StORM\Exception\GeneralException
 	 */
-	public function manyTotalCount(array $rootValue, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): int
+	public function manyTotalCount(array $rootValue, array $args, GraphQLContext $context, ResolveInfo|array $resolveInfo): int
 	{
 		return \count($this->many($rootValue, $args, $context, $resolveInfo));
 	}
@@ -102,13 +102,13 @@ abstract class CrudResolver extends BaseResolver
 	 * @param array<mixed> $rootValue
 	 * @param array<mixed> $args
 	 * @param \LqGrAphi\GraphQLContext $context
-	 * @param \GraphQL\Type\Definition\ResolveInfo $resolveInfo
+	 * @param \GraphQL\Type\Definition\ResolveInfo|array<mixed> $resolveInfo
 	 * @return array<mixed>
 	 * @throws \LqGrAphi\Resolvers\Exceptions\BadRequestException
 	 * @throws \ReflectionException
 	 * @throws \StORM\Exception\GeneralException
 	 */
-	public function collection(array $rootValue, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): array
+	public function collection(array $rootValue, array $args, GraphQLContext $context, ResolveInfo|array $resolveInfo): array
 	{
 		unset($context);
 
@@ -127,12 +127,12 @@ abstract class CrudResolver extends BaseResolver
 	 * @param array<mixed> $rootValue
 	 * @param array<mixed> $args
 	 * @param \LqGrAphi\GraphQLContext $context
-	 * @param \GraphQL\Type\Definition\ResolveInfo $resolveInfo
+	 * @param \GraphQL\Type\Definition\ResolveInfo|array<mixed> $resolveInfo
 	 * @throws \LqGrAphi\Resolvers\Exceptions\BadRequestException
 	 * @throws \ReflectionException
 	 * @throws \StORM\Exception\GeneralException
 	 */
-	public function collectionTotalCount(array $rootValue, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): int
+	public function collectionTotalCount(array $rootValue, array $args, GraphQLContext $context, ResolveInfo|array $resolveInfo): int
 	{
 		return \count($this->collection($rootValue, $args, $context, $resolveInfo));
 	}
@@ -141,10 +141,10 @@ abstract class CrudResolver extends BaseResolver
 	 * @param array<mixed> $rootValue
 	 * @param array<mixed> $args
 	 * @param \LqGrAphi\GraphQLContext $context
-	 * @param \GraphQL\Type\Definition\ResolveInfo $resolveInfo
+	 * @param \GraphQL\Type\Definition\ResolveInfo|array<mixed> $resolveInfo
 	 * @return array<mixed>|null
 	 */
-	public function create(array $rootValue, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): ?array
+	public function create(array $rootValue, array $args, GraphQLContext $context, ResolveInfo|array $resolveInfo): ?array
 	{
 		if ($this->onBeforeCreate) {
 			[$rootValue, $args] = \call_user_func($this->onBeforeCreate, $rootValue, $args);
@@ -184,10 +184,10 @@ abstract class CrudResolver extends BaseResolver
 	 * @param array<mixed> $rootValue
 	 * @param array<mixed> $args
 	 * @param \LqGrAphi\GraphQLContext $context
-	 * @param \GraphQL\Type\Definition\ResolveInfo $resolveInfo
+	 * @param \GraphQL\Type\Definition\ResolveInfo|array<mixed> $resolveInfo
 	 * @return array<mixed>|null
 	 */
-	public function update(array $rootValue, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): ?array
+	public function update(array $rootValue, array $args, GraphQLContext $context, ResolveInfo|array $resolveInfo): ?array
 	{
 		if ($this->onBeforeUpdate) {
 			[$rootValue, $args] = \call_user_func($this->onBeforeUpdate, $rootValue, $args);
@@ -247,9 +247,9 @@ abstract class CrudResolver extends BaseResolver
 	 * @param array<mixed> $rootValue
 	 * @param array<mixed> $args
 	 * @param \LqGrAphi\GraphQLContext $context
-	 * @param \GraphQL\Type\Definition\ResolveInfo $resolveInfo
+	 * @param \GraphQL\Type\Definition\ResolveInfo|array<mixed> $resolveInfo
 	 */
-	public function delete(array $rootValue, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): int
+	public function delete(array $rootValue, array $args, GraphQLContext $context, ResolveInfo|array $resolveInfo): int
 	{
 		unset($context, $resolveInfo);
 

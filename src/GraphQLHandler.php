@@ -17,8 +17,10 @@ use GraphQL\Utils\AST;
 use GraphQL\Utils\BuildSchema;
 use GraphQL\Utils\SchemaPrinter;
 use HaydenPierce\ClassFinder\ClassFinder;
+use LqGrAphi\Resolvers\Exceptions\BaseException;
 use LqGrAphi\Schema\BaseMutation;
 use LqGrAphi\Schema\BaseQuery;
+use LqGrAphi\Schema\BaseType;
 use Nette\Caching\Cache;
 use Nette\Caching\Storage;
 use Nette\DI\Container;
@@ -45,6 +47,11 @@ class GraphQLHandler
 
 	private readonly Cache $cache;
 
+	/**
+	 * @var array<mixed>
+	 */
+	private array $cachedResolvers = [];
+
 	public function __construct(
 		private readonly Container $container,
 		private readonly Request $httpRequest,
@@ -61,13 +68,78 @@ class GraphQLHandler
 	public function handle(): array
 	{
 		try {
+			if (!$body = $this->httpRequest->getRawBody()) {
+				return ['Invalid request'];
+			}
+
+			$graphqlRequest = \json_decode($body, true);
+			$cachedQueryId = null;
+
+			if (isset($graphqlRequest['queryId'])) {
+				$cachedQueryId = $graphqlRequest['queryId'];
+			} elseif (isset($graphqlRequest['query']) && \is_string($graphqlRequest['query']) && Strings::length($graphqlRequest['query']) > 0) {
+				$cachedQueryId = \md5($graphqlRequest['query']);
+			}
+
+			$cachedQuery = $this->cache->load($cachedQueryId);
+
+			if ($cachedQuery) {
+				$result = [];
+				$errors = [];
+
+				foreach ($cachedQuery as $key => $query) {
+					/** @var class-string<\LqGrAphi\Resolvers\BaseResolver> $resolverClass */
+					$resolverClass = $query['resolver'];
+					$resolver = $this->container->getByType($resolverClass, false);
+
+					if (!$resolver) {
+						$errors[] = [
+							'message' => "Resolver {$query['resolver']} not found",
+							'path' => [$key],
+						];
+
+						continue;
+					}
+
+					try {
+						$result[$key] = $resolver->{$query['action']}([], $query['args'], $this->getContext(), $query['fieldSelection']);
+					} catch (BaseException $e) {
+						if ($e->isClientSafe()) {
+							$errors[] = [
+								'message' => $e->getMessage(),
+								'path' => [$key],
+							];
+						} else {
+							$errors[] = [
+								'message' => 'Internal server error',
+								'path' => [$key],
+							];
+
+							Debugger::log($e, ILogger::EXCEPTION);
+						}
+					} catch (\Throwable $e) {
+						$errors[] = [
+							'message' => 'Internal server error',
+							'path' => [$key],
+						];
+
+						Debugger::log($e, ILogger::EXCEPTION);
+					}
+				}
+
+				return ['data' => $result, 'errors' => $errors];
+			}
+
+			if (isset($graphqlRequest['queryId'])) {
+				return ['errors' => ['message' => 'Query not found in cache']];
+			}
+
 			$psrRequest = Psr7RequestFactory::fromNette($this->httpRequest);
 
 			$schema = $this->getCachedSchema();
 
 			$server = new StandardServer([
 				'schema' => $schema,
-				'queryBatching' => true,
 				'context' => $this->getContext(),
 				'fieldResolver' => function ($objectValue, array $args, GraphQLContext $context, ResolveInfo $info) {
 					$fieldName = $info->fieldName;
@@ -146,7 +218,16 @@ class GraphQLHandler
 							: $property;
 					}
 
-					return $resolver->{$actionName}([], $args, $context, $info);
+					$result = $resolver->{$actionName}([], $args, $context, $info);
+
+					$this->cachedResolvers[$fieldName] = [
+						'resolver' => $resolverName,
+						'action' => $actionName,
+						'args' => $args,
+						'fieldSelection' => $info->getFieldSelection(BaseType::MAX_DEPTH),
+					];
+
+					return $result;
 				},
 			]);
 
@@ -175,6 +256,7 @@ class GraphQLHandler
 			}
 
 			$result = $result->toArray($debugFlag);
+			$this->cache->save($cachedQueryId, $this->cachedResolvers);
 
 			$this->connection->getLink()->commit();
 

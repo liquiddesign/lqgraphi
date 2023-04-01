@@ -24,16 +24,16 @@ abstract class BaseResolver
 
 	/**
 	 * @param \StORM\Collection<\StORM\Entity> $collection
-	 * @param \GraphQL\Type\Definition\ResolveInfo $resolveInfo
+	 * @param \GraphQL\Type\Definition\ResolveInfo|array<mixed> $resolveInfo
 	 * @param array{'sort': string|null, 'order': string, 'page': int|null, 'limit': int|null, 'filters': string|null}|null $manyInput
 	 * @return array<mixed>
 	 * @throws \LqGrAphi\Resolvers\Exceptions\BadRequestException
 	 * @throws \ReflectionException
 	 * @throws \StORM\Exception\GeneralException
 	 */
-	protected function fetchResult(Collection $collection, ResolveInfo $resolveInfo, ?array $manyInput = null): array
+	protected function fetchResult(Collection $collection, ResolveInfo|array $resolveInfo, ?array $manyInput = null): array
 	{
-		$fieldSelection = $resolveInfo->getFieldSelection(BaseType::MAX_DEPTH);
+		$fieldSelection = \is_array($resolveInfo) ? $resolveInfo : $resolveInfo->getFieldSelection(BaseType::MAX_DEPTH);
 
 		try {
 			$collection->filter((array) ($manyInput['filters'] ?? []));
@@ -127,17 +127,17 @@ abstract class BaseResolver
 
 		$collection->setSelect(($selectOriginalId ? ['originalId' => $selectOriginalId] : []) + $ormFieldSelection);
 
-		foreach ($collection->fetchArray(\stdClass::class) as $object) {
-			if ($selectOriginalId) {
-				$objects[$object->originalId][$object->{BaseType::ID_NAME}] = \get_object_vars($object);
+		$keys = [];
 
-				continue;
-			}
+		while ($object = $collection->fetch(\stdClass::class)) {
+			/** @var \stdClass $object */
+
+			$keys[] = $object->{BaseType::ID_NAME};
 
 			$objects[$object->{BaseType::ID_NAME}] = \get_object_vars($object);
 		}
 
-		$keys = \array_keys($objects);
+		$collection->__destruct();
 
 		foreach ($relations as $relationName) {
 			if (\is_bool($fieldSelection[$relationName])) {
@@ -156,22 +156,20 @@ abstract class BaseResolver
 			);
 
 			if ($relation->isKeyHolder()) {
-				foreach ($objects as $object) {
-					$objects[$object[BaseType::ID_NAME]][$relationName] = isset($relationObjects[$object[BaseType::ID_NAME]]) && $relationObjects[$object[BaseType::ID_NAME]] ?
-						Arrays::first($relationObjects[$object[BaseType::ID_NAME]]) :
-						null;
+				foreach (\array_keys($objects) as $objectKey) {
+					$objects[$objectKey][$relationName] = null;
+				}
+
+				foreach ($relationObjects as $relationObject) {
+					$objects[$relationObject['originalId']][$relationName] = $relationObject;
 				}
 			} else {
 				foreach (\array_keys($objects) as $objectKey) {
 					$objects[$objectKey][$relationName] = [];
 				}
 
-				foreach ($relationObjects as $relationObject) {
-					if (isset($objects[$relationObject['originalId']][$relationName])) {
-						$objects[$relationObject['originalId']][$relationName][$relationObject[BaseType::ID_NAME]] = $relationObject;
-					} else {
-						$objects[$relationObject['originalId']][$relationName] = [$relationObject[BaseType::ID_NAME] => $relationObject];
-					}
+				foreach ($relationObjects as $relationObjectId => $relationObject) {
+					$objects[$relationObject['originalId']][$relationName][$relationObjectId] = $relationObject;
 				}
 			}
 		}
@@ -199,12 +197,8 @@ abstract class BaseResolver
 				$objects[$objectKey][$relationName] = [];
 			}
 
-			foreach ($relationObjects as $relationObject) {
-				if (isset($objects[$relationObject['originalId']][$relationName])) {
-					$objects[$relationObject['originalId']][$relationName][$relationObject[BaseType::ID_NAME]] = $relationObject;
-				} else {
-					$objects[$relationObject['originalId']][$relationName] = [$relationObject[BaseType::ID_NAME] => $relationObject];
-				}
+			foreach ($relationObjects as $relationObjectId => $relationObject) {
+				$objects[$relationObject['originalId']][$relationName][$relationObjectId] = $relationObject;
 			}
 		}
 

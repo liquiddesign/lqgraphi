@@ -132,13 +132,13 @@ Signature of every resolver function must be:
  * @param array<mixed> $rootValue
  * @param array<mixed> $args
  * @param \LqGrAphi\GraphQLContext $context
- * @param \GraphQL\Type\Definition\ResolveInfo $resolveInfo
+ * @param \GraphQL\Type\Definition\ResolveInfo|array<mixed> $resolveInfo
  * @return array<mixed>|null
  * @throws \LqGrAphi\Resolvers\Exceptions\BadRequestException
  * @throws \ReflectionException
  * @throws \StORM\Exception\GeneralException
  */
-public function getMany(array $rootValue, array $args, GraphQLContext $context, ResolveInfo $resolveInfo): ?array
+public function getMany(array $rootValue, array $args, GraphQLContext $context, ResolveInfo|array $resolveInfo): ?array
 {
     ...
 }
@@ -260,7 +260,11 @@ System will set detected language (if supported) as primary language for all SQL
 If no language in "Accept-Language" header is supported, then primary language from settings is used.
 
 ## Roadmap
-- Persisted queries with Redis/KeyDB
+### 2023
+- ✅ Persisted queries with cache
+- ❗New type loading system to bring better DX
+    - No need to register types
+    - Load types from namespace
+    - Refactor TypeRegister
 - Security - guards, login
 - Automatic testing
-- Query batching with dataloader
