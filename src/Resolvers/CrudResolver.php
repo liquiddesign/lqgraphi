@@ -171,7 +171,7 @@ abstract class CrudResolver extends BaseResolver
 			}
 		} catch (\Throwable $e) {
 			if ($e->getCode() === '23000') {
-				throw new BadRequestException('Invalid values in relations!');
+				throw new BadRequestException('Invalid input values! Check possible duplicates, relations and validation errors.');
 			}
 
 			throw new BadRequestException('Invalid values!');
@@ -231,7 +231,7 @@ abstract class CrudResolver extends BaseResolver
 		} catch (\Throwable $e) {
 			if (!$context->isDebugMode()) {
 				if ($e->getCode() === '23000') {
-					throw new BadRequestException('Invalid values in relations!');
+					throw new BadRequestException('Invalid input values! Check possible duplicates, relations and validation errors.');
 				}
 
 				throw new BadRequestException('Invalid values!');
@@ -362,7 +362,7 @@ abstract class CrudResolver extends BaseResolver
 						$object->update($inputField);
 					} catch (\Throwable $e) {
 						if ($e->getCode() === '23000') {
-							throw new BadRequestException('Invalid values in relations!');
+							throw new BadRequestException('Invalid input values! Check possible duplicates, relations and validation errors.');
 						}
 
 						throw new BadRequestException('Invalid values!');
@@ -372,7 +372,7 @@ abstract class CrudResolver extends BaseResolver
 						$object = $repository->createOne($inputField);
 					} catch (\Throwable $e) {
 						if ($e->getCode() === '23000') {
-							throw new BadRequestException('Invalid values in relations!');
+							throw new BadRequestException('Invalid input values! Check possible duplicates, relations and validation errors.');
 						}
 
 						throw new BadRequestException('Invalid values!');
@@ -408,7 +408,7 @@ abstract class CrudResolver extends BaseResolver
 						$object->update($oneInputField);
 					} catch (\Throwable $e) {
 						if ($e->getCode() === '23000') {
-							throw new BadRequestException('Invalid values in relations!');
+							throw new BadRequestException('Invalid input values! Check possible duplicates, relations and validation errors.');
 						}
 
 						throw new BadRequestException('Invalid values!');
@@ -418,7 +418,7 @@ abstract class CrudResolver extends BaseResolver
 						$object = $repository->createOne($oneInputField);
 					} catch (\Throwable $e) {
 						if ($e->getCode() === '23000') {
-							throw new BadRequestException('Invalid values in relations!');
+							throw new BadRequestException('Invalid input values! Check possible duplicates, relations and validation errors.');
 						}
 
 						throw new BadRequestException('Invalid values!');

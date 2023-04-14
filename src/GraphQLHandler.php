@@ -74,10 +74,12 @@ class GraphQLHandler
 			$graphqlRequest = \json_decode($body, true);
 			$cachedQueryId = null;
 
-			if (isset($graphqlRequest['queryId'])) {
-				$cachedQueryId = $graphqlRequest['queryId'];
-			} elseif (isset($graphqlRequest['query']) && \is_string($graphqlRequest['query']) && Strings::length($graphqlRequest['query']) > 0) {
-				$cachedQueryId = \md5($graphqlRequest['query'] . \serialize($graphqlRequest['variables'] ?? '') . ($graphqlRequest['operationName'] ?? ''));
+			if (!Strings::contains(Strings::lower($body), 'mutation')) {
+				if (isset($graphqlRequest['queryId'])) {
+					$cachedQueryId = $graphqlRequest['queryId'];
+				} elseif (isset($graphqlRequest['query']) && \is_string($graphqlRequest['query']) && Strings::length($graphqlRequest['query']) > 0) {
+					$cachedQueryId = \md5($graphqlRequest['query'] . \serialize($graphqlRequest['variables'] ?? '') . ($graphqlRequest['operationName'] ?? ''));
+				}
 			}
 
 			$cachedQuery = $this->cache->load($cachedQueryId);
